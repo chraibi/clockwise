@@ -6,7 +6,7 @@
 
 A recent paper in Nature Communications (Echeverría-Huarte, Feliciani, Shi, Nishinari, Sánchez, Garcimartín & Zuriguel, 2026) reports a striking observation: when people roam freely inside a confined circular arena, the crowd slowly drifts **counterclockwise**. The authors measured this across experiments in Spain and Japan and found it to be robust. Their main claim is that the rotation is not a collective effect of people avoiding one another, but comes from an **individual bias** — a slight tendency, when facing a wall, to turn left.
 
-We tried to reproduce this in [@JuPedSim](https://www.jupedsim.org/), our open-source pedestrian simulator, to see whether the mechanism behaves as described.
+We tried to reproduce this in [@JuPedSim](https://www.jupedsim.org/), to see whether the mechanism behaves as described.
 
 ## Why a simulator helps here
 
@@ -18,7 +18,7 @@ We model a 5 m arena, agents roaming with random headings, collision avoidance f
 
 **With symmetric avoidance, the crowd does not rotate.** Across crowd sizes and seeds, `M̄ ≈ 0`. So the simulator's interaction model alone produces no preferred direction.
 
-**Adding the paper's bias — turning left when facing the wall — produces counterclockwise rotation.** We first tried placing the bias in free-space curvature, and it did not work; re-reading the paper, the proposed mechanism is specifically about turning left *at the wall*, and that is what reproduces the effect.
+**Adding the paper's bias — turning left when facing the wall — produces counterclockwise rotation.** We first tried placing the bias in free-space curvature; on its own it did not give the confined rotation (we come back to why below), so we used the mechanism the paper describes directly — turning left *at the wall* — and that reproduces the effect.
 
 **The strength of the rotation depends on how common the bias is.** A single turn strength saturates, so the natural knob is the *fraction* of people who have the left-turn tendency — which matches the paper's mixed population. With nobody biased the crowd doesn't rotate; with everyone biased it rotates strongly; and a crowd where roughly a third turn left reproduces the experiment's `M̄ ≈ 0.2`.
 
@@ -27,6 +27,20 @@ We model a 5 m arena, agents roaming with random headings, collision avoidance f
 **[Insert: `docs/results/m_pdf.png`]** — the distribution of `M`. The control is centred on zero; with a fraction of left-turners it shifts counterclockwise, as in the paper.
 
 **[Insert: `docs/results/comparison.gif`]** — three crowds side by side (0%, ~45%, 100% left-turners). The control mills without a net sense; with more left-turners the crowd circulates counterclockwise.
+
+## Matching the average is not matching the mechanism
+
+The paper's data also let us go further than the single number `M̄`. Their trajectory files include a per-agent polarization value, and recomputing it with our metric matches theirs exactly — so we can compare not just the average rotation but *where* in the arena it happens. This turned out to be the most useful test, because it is the one that can disagree with us rather than confirm us.
+
+The experiment shows a **coherent counterclockwise rotation that fills the disk**: positive at every radius, building from a faint centre to a peak in the outer-middle, then easing at the very wall. We compared this against two minimal models — the turn-left-at-wall bias above, and an "intrinsic" version where every agent has a small constant left veer at every step (closer to the paper's reading of an individual bias present even away from walls).
+
+Neither reproduces the experiment, and they miss in different ways. The **wall-turn** model gets the *amount* of rotation right but puts it in the wrong place — a thin spike right at the rim, with a nearly still interior, because the bias only acts at the wall. The **intrinsic veer** spreads the rotation into the interior, closer to where the experiment peaks, but it comes out **clockwise** — the wrong sign. In open space a left veer does rotate counterclockwise; we checked that directly. But once the arena is confined, our wall response flips it: the net sense is set by how the veer meets the wall, not by the veer alone.
+
+**[Insert: `docs/results/radial_profile.png`]** — local rotation against distance from the centre, for the experiment and the two models. The experiment is positive throughout and peaks in the outer-middle; the wall-turn model spikes at the rim; the intrinsic veer turns negative.
+
+**[Insert: `docs/results/polarization_field.png`]** — the same three as spatial maps (blue counterclockwise, red clockwise). The experiment is broadly blue across the disk; the wall-turn model is a blue ring; the intrinsic veer is a red band.
+
+We read this as support for the paper's framing rather than against it: matching one number with a one-knob shortcut is easy, but the spatial structure of the real rotation does not casually fall out of either simple mechanism. A faithful reproduction would need more than we put in here.
 
 ## What this is, and what it isn't
 
