@@ -71,11 +71,13 @@ def comparison_animation(
     radius: float,
     out_path: Path,
     fps: int = 20,
+    ncols: int | None = None,
 ) -> Path:
-    """Animate several labelled cases side by side (one arena panel each) to an mp4.
+    """Animate several labelled cases as arena panels to an mp4.
 
-    cases: list of (label, trajectory). Panels share a clock; shorter trajectories hold
-    their last frame."""
+    cases: list of (label, trajectory). Panels share a clock; shorter trajectories hold their
+    last frame. Panels lay out in a grid of `ncols` columns (default: a single row); any
+    surplus cells are hidden."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -85,11 +87,14 @@ def comparison_animation(
 
     n = len(cases)
     n_frames = max(len(traj) for _, traj in cases)
-    fig, axes = plt.subplots(1, n, figsize=(4.2 * n, 4.6))
-    if n == 1:
-        axes = [axes]
+    ncols = ncols or n
+    nrows = (n + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4.2 * ncols, 4.6 * nrows))
+    axes = np.atleast_1d(axes).ravel()
+    for ax in axes[n:]:
+        ax.axis("off")
     scatters = []
-    for ax, (label, _) in zip(axes, cases, strict=True):
+    for ax, (label, _) in zip(axes[:n], cases, strict=True):
         ax.add_patch(Circle((0, 0), radius, fill=False, color="#5b6b88"))
         scatters.append(ax.scatter([], [], s=30, c="#4e79a7"))
         ax.set_xlim(-radius * 1.05, radius * 1.05)

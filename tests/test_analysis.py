@@ -40,6 +40,14 @@ def test_comparison_animation_writes_mp4(tmp_path):
     assert out.exists()
 
 
+def test_comparison_animation_grid_with_surplus_cells(tmp_path):
+    # five panels in a 3-column grid -> 2 rows, one hidden cell; must still render
+    from clockwise.analysis import comparison_animation
+    cases = [(f"m{i}", [[(0.0, 0.0)], [(0.1, 0.1)]]) for i in range(5)]
+    out = comparison_animation(cases, radius=5.0, out_path=tmp_path / "grid.mp4", fps=5, ncols=3)
+    assert out.exists()
+
+
 def test_spatial_field_bins_mean_and_marks_empty():
     import math
 

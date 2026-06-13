@@ -83,7 +83,12 @@ property of any particular collision model; it has to be put in.
 
 ![control across models](docs/results/model_control.png)
 
-Reproduce with `python scripts/compare_models.py`.
+The same point as a video — one real experimental run beside the four model controls. The real crowd
+circulates counterclockwise; the bare models just mill:
+
+![collage: experiment vs the four model controls](docs/results/collage_models.gif)
+
+Reproduce with `python scripts/compare_models.py` and `python scripts/collage_video.py`.
 
 **2. The polarization distribution shifts CCW, as in the paper's Fig 2.** The control `M(t)` is centred
 on zero; with 45 % left-turners it shifts to `M̄ ≈ +0.23`.

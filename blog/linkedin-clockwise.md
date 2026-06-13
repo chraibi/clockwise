@@ -22,6 +22,8 @@ We model a 5 m arena, agents roaming with random headings, collision avoidance f
 
 **[Insert: `docs/results/model_control.png`]** — the no-bias control for the four collision models, against the experimental `M̄` (dashed). All four sit near zero.
 
+**[Insert: `docs/results/collage_models.gif`]** — the same point as a video: one real experimental run beside the four model controls. The real crowd circulates counterclockwise; the bare models just mill.
+
 **Adding the paper's bias — turning left when facing the wall — produces counterclockwise rotation.** We first tried placing the bias in free-space curvature; on its own it did not give the confined rotation (we come back to why below), so we used the mechanism the paper describes directly — turning left *at the wall* — and that reproduces the effect.
 
 **The strength of the rotation depends on how common the bias is.** A single turn strength saturates, so the natural knob is the *fraction* of people who have the left-turn tendency — which matches the paper's mixed population. With nobody biased the crowd doesn't rotate; with everyone biased it rotates strongly; and a crowd where roughly a third turn left reproduces the experiment's `M̄ ≈ 0.2`.
