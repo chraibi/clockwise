@@ -4,9 +4,9 @@ import pandas as pd
 
 
 def mbar_table(df: pd.DataFrame) -> pd.DataFrame:
-    """Mean/std of M-bar per (bias_beta, n_agents)."""
+    """Mean/std of M-bar per (left_wall_bias, n_agents)."""
     return (
-        df.groupby(["bias_beta", "n_agents"])["m_bar"]
+        df.groupby(["left_wall_bias", "n_agents"])["m_bar"]
         .agg(mean="mean", std="std", n="count")
         .reset_index()
         .fillna({"std": 0.0})

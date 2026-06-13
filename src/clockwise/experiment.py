@@ -9,13 +9,13 @@ import pandas as pd
 from .arena import build_arena
 from .config import ArenaConfig
 from .polarization import polarization
-from .roaming import Roamer, carrot
+from .roaming import Roamer, carrot, clamp_inside
 
 
 @dataclass
 class ArenaResult:
     seed: int
-    bias_beta: float
+    left_wall_bias: float
     n_agents: int
     m_bar: float
     m_series: list[float]
@@ -78,7 +78,9 @@ def run_arena(seed: int, cfg: ArenaConfig | None = None, record_traj: bool = Fal
             ag = sim.agent(aid)
             pos = (ag.position[0], ag.position[1])
             heading = roamers[aid].update(pos, cfg, rng)
-            ag.target = carrot(pos, heading, cfg.carrot_distance)
+            ag.target = clamp_inside(
+                carrot(pos, heading, cfg.carrot_distance), cfg.radius, cfg.carrot_margin
+            )
             vx = (pos[0] - prev[aid][0]) / cfg.dt
             vy = (pos[1] - prev[aid][1]) / cfg.dt
             positions.append(pos)
@@ -91,25 +93,25 @@ def run_arena(seed: int, cfg: ArenaConfig | None = None, record_traj: bool = Fal
         sim.iterate()
 
     m_bar = sum(m_series) / len(m_series) if m_series else 0.0
-    return ArenaResult(seed, cfg.bias_beta, cfg.n_agents, m_bar, m_series, trajectory)
+    return ArenaResult(seed, cfg.left_wall_bias, cfg.n_agents, m_bar, m_series, trajectory)
 
 
 def sweep(
-    biases: Sequence[float],
+    left_biases: Sequence[float],
     sizes: Sequence[int],
     seeds: Sequence[int],
     base: ArenaConfig | None = None,
 ) -> pd.DataFrame:
-    """Run every (bias, size, seed); returns long DataFrame of m_bar."""
+    """Run every (left_wall_bias, size, seed); returns long DataFrame of m_bar."""
     from dataclasses import replace
 
     cfg0 = base or ArenaConfig()
     rows = []
-    for bias in biases:
+    for bias in left_biases:
         for n in sizes:
             for seed in seeds:
-                res = run_arena(seed, replace(cfg0, bias_beta=bias, n_agents=n))
+                res = run_arena(seed, replace(cfg0, left_wall_bias=bias, n_agents=n))
                 rows.append(
-                    {"bias_beta": bias, "n_agents": n, "seed": seed, "m_bar": res.m_bar}
+                    {"left_wall_bias": bias, "n_agents": n, "seed": seed, "m_bar": res.m_bar}
                 )
     return pd.DataFrame(rows)

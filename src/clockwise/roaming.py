@@ -10,20 +10,39 @@ def carrot(pos: tuple[float, float], heading: float, distance: float) -> tuple[f
     return (pos[0] + distance * math.cos(heading), pos[1] + distance * math.sin(heading))
 
 
+def clamp_inside(
+    point: tuple[float, float], radius: float, margin: float = 0.3
+) -> tuple[float, float]:
+    """Pull a point radially inward so it stays at least `margin` inside the disk rim."""
+    r = math.hypot(point[0], point[1])
+    lim = radius - margin
+    if r > lim and r > 0.0:
+        return (lim * point[0] / r, lim * point[1] / r)
+    return point
+
+
 @dataclass
 class Roamer:
-    """Per-agent heading that random-walks, drifts CCW by the bias, and steers off the wall."""
+    """Per-agent heading: unbiased wander, plus a wall response that is either symmetric
+    (control) or a leftward turn (the individual bias)."""
 
     heading: float
 
     def update(
         self, pos: tuple[float, float], cfg: ArenaConfig, rng: random.Random
     ) -> float:
-        h = self.heading + rng.gauss(0.0, cfg.wander_sigma) + cfg.bias_beta
-        r = math.hypot(pos[0], pos[1])
+        h = self.heading + rng.gauss(0.0, cfg.wander_sigma)  # unbiased wander
+        x, y = pos
+        r = math.hypot(x, y)
         if r > cfg.radius - cfg.wall_margin and r > 0.0:
-            inward = math.atan2(-pos[1], -pos[0])
-            diff = math.atan2(math.sin(inward - h), math.cos(inward - h))
-            h += cfg.wall_turn_gain * diff
+            phi_out = math.atan2(y, x)  # outward radial direction
+            facing_out = math.cos(h - phi_out) > 0.0
+            if cfg.left_wall_bias > 0.0:
+                if facing_out:
+                    h += cfg.left_wall_bias  # biased: turn LEFT (CCW) away from the wall
+            else:
+                inward = math.atan2(-y, -x)  # control: symmetric turn toward the centre
+                diff = math.atan2(math.sin(inward - h), math.cos(inward - h))
+                h += cfg.wall_turn_gain * diff
         self.heading = h
         return h
