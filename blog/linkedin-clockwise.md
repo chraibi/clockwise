@@ -16,9 +16,11 @@ We model a 5 m arena, agents roaming with random headings, collision avoidance f
 
 ## What we found
 
-**With symmetric avoidance, the crowd does not rotate.** Across crowd sizes and seeds, `M̄ ≈ 0`. So the simulator's interaction model alone produces no preferred direction. And this is not a quirk of one model: we ran the same control through four of JuPedSim's collision models — Social Force, WarpDriver, Collision-Free Speed, and Anticipation Velocity — and every one stays near zero, far below the experimental value. The rotation has to be put in; it does not fall out of collision avoidance.
+**With symmetric avoidance, the crowd does not rotate.** Across crowd sizes and seeds, `M̄ ≈ 0`. So the simulator's interaction model alone produces no preferred direction.
 
-**[Insert: `docs/results/model_control.png`]** — the no-bias control for four collision models, against the experimental `M̄`. All four sit near zero.
+**And this is not a quirk of one collision model.** JuPedSim ships several models of how people avoid each other — some velocity-based, some force-based — and they differ a lot in their internals. A skeptic could fairly ask whether the flat result is just a feature of the one we happened to pick. So we ran the same no-bias control through four of them: Social Force, WarpDriver, Collision-Free Speed, and Anticipation Velocity. Every one stays within a few hundredths of zero, far below the experimental value. The absence of rotation is a property of *symmetric avoidance itself*, not of any particular model — the rotation has to be put in; it does not fall out of collision handling.
+
+**[Insert: `docs/results/model_control.png`]** — the no-bias control for the four collision models, against the experimental `M̄` (dashed). All four sit near zero.
 
 **Adding the paper's bias — turning left when facing the wall — produces counterclockwise rotation.** We first tried placing the bias in free-space curvature; on its own it did not give the confined rotation (we come back to why below), so we used the mechanism the paper describes directly — turning left *at the wall* — and that reproduces the effect.
 
