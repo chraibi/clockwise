@@ -7,6 +7,7 @@ with no net sense — the visual form of the model-comparison result.
 Run: PYTHONPATH=src python scripts/collage_video.py
 """
 
+import math
 import subprocess
 from dataclasses import replace
 from pathlib import Path
@@ -81,13 +82,18 @@ def main() -> None:
     duration = len(exp) * SAMPLE_DT
     print(f"experiment: {n_ped} peds, {len(exp)} frames (~{duration:.0f}s)")
 
-    # Match the crowd size and window; control (no bias) for every model.
+    # Models start from the experiment's first-frame positions, no warm-up, so frame 0 is the
+    # shared start; control (no bias) for every model.
+    starts = [(x, y) for x, y, _ in exp[0]]
+    gap = min(math.dist(a, b) for i, a in enumerate(starts) for b in starts[i + 1 :])
+    radius = min(0.2, gap / 2 - 0.02)  # shrink the body to fit the real crowd spacing
     base = ArenaConfig(
-        n_agents=n_ped, biased_fraction=0.0, warmup_s=10.0, duration_s=10.0 + duration
+        n_agents=len(starts), biased_fraction=0.0, warmup_s=0.0, duration_s=duration,
+        agent_radius=radius,
     )
     cases = [("experiment", exp)]
     for name in MODELS:
-        res = run_arena(seed=0, cfg=replace(base, model=name), record_traj=True)
+        res = run_arena(seed=0, cfg=replace(base, model=name), record_traj=True, starts=starts)
         cases.append((_LABELS[name], with_rotation(res.trajectory, SAMPLE_DT, SMOOTH_S)))
         print(f"{name:32s} {len(res.trajectory)} frames, M̄={res.m_bar:+.3f}")
 

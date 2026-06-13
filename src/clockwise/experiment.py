@@ -57,6 +57,7 @@ def run_arena(
     cfg: ArenaConfig | None = None,
     record_traj: bool = False,
     record_field: bool = False,
+    starts: list[tuple[float, float]] | None = None,
 ) -> ArenaResult:
     cfg = cfg or ArenaConfig()
     rng = random.Random(seed)
@@ -69,7 +70,11 @@ def run_arena(
     direct = sim.add_direct_steering_stage()
     journey = sim.add_journey(jps.JourneyDescription([direct]))
 
-    starts = _seed_positions(cfg, rng)
+    if starts is None:
+        starts = _seed_positions(cfg, rng)
+    else:
+        # given positions (e.g. from an experiment) must keep the body inside the disk
+        starts = [clamp_inside(p, cfg.radius, cfg.agent_radius + 0.05) for p in starts]
     agents: list[int] = []
     roamers: dict[int, Roamer] = {}
     prev: dict[int, tuple[float, float]] = {}

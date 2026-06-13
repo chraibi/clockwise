@@ -29,6 +29,13 @@ def test_symmetric_control_has_no_net_rotation():
     assert abs(sum(mbars) / len(mbars)) < 0.1
 
 
+def test_run_arena_accepts_custom_start_positions():
+    # explicit starts override the placement count; each frame holds exactly those agents
+    starts = [(0.0, 0.0), (1.0, 0.0), (-1.0, 0.5)]
+    res = run_arena(seed=0, cfg=_tiny(), record_traj=True, starts=starts)
+    assert res.trajectory and all(len(frame) == len(starts) for frame in res.trajectory)
+
+
 def test_intrinsic_left_veer_is_ccw_in_open_space():
     # Sign check, isolated from the wall: a lone agent in a large arena (wall never fires)
     # with a constant LEFT veer rotates CCW (m_bar > 0). Confined runs invert this — the
