@@ -85,7 +85,7 @@ def main() -> None:
     base = ArenaConfig(
         n_agents=n_ped, biased_fraction=0.0, warmup_s=10.0, duration_s=10.0 + duration
     )
-    cases = [("experiment (real data)", exp)]
+    cases = [("experiment", exp)]
     for name in MODELS:
         res = run_arena(seed=0, cfg=replace(base, model=name), record_traj=True)
         cases.append((_LABELS[name], with_rotation(res.trajectory, SAMPLE_DT, SMOOTH_S)))
