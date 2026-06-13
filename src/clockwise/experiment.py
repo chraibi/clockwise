@@ -41,6 +41,16 @@ def _seed_positions(cfg: ArenaConfig, rng: random.Random) -> list[tuple[float, f
     return pts
 
 
+def _make_roamer(cfg: ArenaConfig, rng: random.Random) -> Roamer:
+    """One roamer. Intrinsic study (free_curvature > 0): every agent veers left in free space,
+    walls stay symmetric. Wall-turn study (free_curvature == 0): a `biased_fraction` share
+    turn left at the wall, the rest are symmetric."""
+    heading = rng.uniform(0, 2 * math.pi)
+    if cfg.free_curvature != 0.0:
+        return Roamer(heading=heading, biased=False, free_curvature=cfg.free_curvature)
+    return Roamer(heading=heading, biased=rng.random() < cfg.biased_fraction)
+
+
 def run_arena(
     seed: int,
     cfg: ArenaConfig | None = None,
@@ -69,10 +79,7 @@ def run_arena(
         )
         aid = sim.add_agent(params)
         agents.append(aid)
-        roamers[aid] = Roamer(
-            heading=rng.uniform(0, 2 * math.pi),
-            biased=rng.random() < cfg.biased_fraction,
-        )
+        roamers[aid] = _make_roamer(cfg, rng)
         prev[aid] = p
 
     n_steps = round(cfg.duration_s / cfg.dt)

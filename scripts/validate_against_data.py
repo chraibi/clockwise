@@ -66,14 +66,15 @@ def experimental_field(speed_eps: float) -> list[tuple[float, float, float]]:
     return samples
 
 
-def simulated_field(biased_fraction: float, seeds: range) -> list[tuple[float, float, float]]:
+def model_field(cfg: ArenaConfig, seeds: range) -> tuple[list[tuple[float, float, float]], float]:
+    """Pooled (x, y, m_i) field samples and M̄ for a given model config."""
     samples: list[tuple[float, float, float]] = []
+    mbars: list[float] = []
     for s in seeds:
-        res = run_arena(
-            s, ArenaConfig(n_agents=24, biased_fraction=biased_fraction), record_field=True
-        )
+        res = run_arena(s, cfg, record_field=True)
         samples.extend(res.field_samples)
-    return samples
+        mbars.append(res.m_bar)
+    return samples, sum(mbars) / len(mbars)
 
 
 def main() -> None:
@@ -101,12 +102,27 @@ def main() -> None:
     plt.close(fig)
     print(f"wrote {OUT / 'experiment_vs_sim.png'}")
 
+    # Spatial structure: experiment vs the two minimal models.
+    # - wall-turn: a share of agents turn left at the wall (matches M̄ by construction).
+    # - intrinsic: every agent has a faithful constant left veer (the paper's left bias),
+    #   walls symmetric. We report what it actually does, not a tuned match.
     exp_field = experimental_field(ArenaConfig().speed_eps)
-    sim_field = simulated_field(biased_fraction=frac, seeds=range(10))
-    field_comparison_plot(
-        exp_field, sim_field, radius=5.0, out_path=OUT / "polarization_field.png", min_count=20
+    wall_field, wall_mbar = model_field(
+        ArenaConfig(n_agents=24, biased_fraction=0.35), seeds=range(10)
     )
-    radial_profile_plot(exp_field, sim_field, radius=5.0, out_path=OUT / "radial_profile.png")
+    intr_field, intr_mbar = model_field(
+        ArenaConfig(n_agents=24, free_curvature=0.10), seeds=range(10)
+    )
+    print(f"wall-turn model M̄ (35% left-turners) = {wall_mbar:+.3f}")
+    print(f"intrinsic-veer model M̄ (left curvature 0.10 rad/step) = {intr_mbar:+.3f}")
+
+    panels = [
+        ("experiment", exp_field),
+        (f"wall-turn ({wall_mbar:+.2f})", wall_field),
+        (f"intrinsic veer ({intr_mbar:+.2f})", intr_field),
+    ]
+    field_comparison_plot(panels, radius=5.0, out_path=OUT / "polarization_field.png", min_count=20)
+    radial_profile_plot(panels, radius=5.0, out_path=OUT / "radial_profile.png")
     print(f"wrote {OUT / 'polarization_field.png'} and {OUT / 'radial_profile.png'}")
 
 

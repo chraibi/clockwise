@@ -23,17 +23,25 @@ def clamp_inside(
 
 @dataclass
 class Roamer:
-    """Per-agent heading: unbiased wander, plus a wall response. A `biased` agent turns
-    LEFT when facing the wall (the individual bias); others turn symmetrically toward the
-    centre (the control behaviour)."""
+    """Per-agent heading: unbiased wander, an optional constant free-space curvature, and a
+    wall response. Two ways to inject the individual bias:
+
+    - `biased` (wall-turn study): turn LEFT only when facing the wall.
+    - `free_curvature` (intrinsic study): a constant leftward turn applied EVERY step, so the
+      agent veers continuously even far from any wall ("walking straight into circles").
+
+    A `biased`/curvature-free agent that is neither turns symmetrically toward the centre at
+    the wall — the control behaviour."""
 
     heading: float
     biased: bool = False
+    free_curvature: float = 0.0
 
     def update(
         self, pos: tuple[float, float], cfg: ArenaConfig, rng: random.Random
     ) -> float:
         h = self.heading + rng.gauss(0.0, cfg.wander_sigma)  # unbiased wander
+        h += self.free_curvature  # constant leftward veer (intrinsic bias; 0 in wall study)
         x, y = pos
         r = math.hypot(x, y)
         if r > cfg.radius - cfg.wall_margin and r > 0.0:

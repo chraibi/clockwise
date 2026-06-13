@@ -50,6 +50,14 @@ def test_control_agent_turns_toward_centre_at_the_wall():
     assert r.heading > math.pi / 2  # moved toward inward (pi)
 
 
+def test_free_curvature_veers_left_every_step():
+    # the intrinsic bias is a constant leftward (CCW) heading change applied even at the centre
+    cfg = ArenaConfig(wander_sigma=0.0, free_curvature=0.1)
+    r = Roamer(heading=0.0, free_curvature=cfg.free_curvature)
+    r.update(pos=(0.0, 0.0), cfg=cfg, rng=random.Random(0))  # at centre: no wall term
+    assert math.isclose(r.heading, 0.1, abs_tol=1e-9)
+
+
 def test_control_wall_turn_is_left_right_symmetric():
     # the symmetric control must have no left/right preference: an agent and its mirror
     # image across the x-axis receive equal-and-opposite turns. (Guards the M̄≈0 control.)

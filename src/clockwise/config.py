@@ -19,6 +19,10 @@ class ArenaConfig:
                                   # The rest use the symmetric inward turn.
     left_wall_bias: float = 0.2   # rad, per-step leftward (CCW) turn a biased agent applies
                                   # when facing the wall (turn strength; effect saturates).
+    free_curvature: float = 0.0   # rad/step constant leftward (CCW) curvature applied EVERY
+                                  # step (the intrinsic, free-space bias). 0 = off (wall-turn
+                                  # study). When > 0 the wall response stays symmetric, so the
+                                  # only chirality is this curvature.
     carrot_distance: float = 1.0  # m, how far ahead the steering target sits
     carrot_margin: float = 0.3    # m, keep the carrot at least this far inside the rim
     wall_margin: float = 1.0      # m from the rim where the wall response starts

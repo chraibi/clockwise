@@ -65,6 +65,7 @@ def test_field_and_radial_plots_write_png(tmp_path):
     from clockwise.analysis import field_comparison_plot, radial_profile_plot
     exp = [(1.0, 0.0, 0.1), (0.0, 3.0, 0.3), (-2.0, 1.0, 0.2)]
     sim = [(1.0, 0.0, 0.05), (0.0, 4.0, 0.6), (-2.0, 1.0, 0.1)]
-    f = field_comparison_plot(exp, sim, radius=5.0, out_path=tmp_path / "field.png")
-    r = radial_profile_plot(exp, sim, radius=5.0, out_path=tmp_path / "radial.png")
+    panels = [("experiment", exp), ("wall-turn", sim), ("intrinsic", sim)]
+    f = field_comparison_plot(panels, radius=5.0, out_path=tmp_path / "field.png")
+    r = radial_profile_plot(panels, radius=5.0, out_path=tmp_path / "radial.png")
     assert f.exists() and r.exists()

@@ -149,24 +149,23 @@ def radial_profile(
     return centres, mean, count
 
 
+_PROFILE_COLOURS = ["#444", "#c0392b", "#2980b9", "#27ae60", "#8e44ad"]
+
+
 def radial_profile_plot(
-    exp_samples: list[tuple[float, float, float]],
-    sim_samples: list[tuple[float, float, float]],
+    panels: list[tuple[str, list[tuple[float, float, float]]]],
     radius: float,
     out_path: Path,
     bins: int = 10,
 ) -> Path:
-    """Overlay experiment vs simulation mean local m against distance from centre."""
+    """Overlay mean local m against distance from centre, one curve per (label, samples)."""
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(7, 5))
-    for label, samples, colour in [
-        ("experiment", exp_samples, "#444"),
-        ("simulation", sim_samples, "#c0392b"),
-    ]:
+    for (label, samples), colour in zip(panels, _PROFILE_COLOURS, strict=False):
         centres, mean, _ = radial_profile(samples, radius, bins)
         ax.plot(centres, mean, "o-", color=colour, label=label)
     ax.axhline(0.0, color="k", lw=0.8, ls="--")
@@ -182,23 +181,23 @@ def radial_profile_plot(
 
 
 def field_comparison_plot(
-    exp_samples: list[tuple[float, float, float]],
-    sim_samples: list[tuple[float, float, float]],
+    panels: list[tuple[str, list[tuple[float, float, float]]]],
     radius: float,
     out_path: Path,
     bins: int = 24,
     vlim: float = 0.4,
     min_count: int = 5,
 ) -> Path:
-    """Side-by-side spatial polarization fields: experiment vs simulation."""
+    """Spatial polarization fields side by side, one panel per (label, samples)."""
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.patches import Circle
 
-    fig, axes = plt.subplots(1, 2, figsize=(11, 5.2))
-    panels = [("experiment", exp_samples), ("simulation", sim_samples)]
+    fig, axes = plt.subplots(1, len(panels), figsize=(5.5 * len(panels), 5.2))
+    if len(panels) == 1:
+        axes = [axes]
     im = None
     for ax, (label, samples) in zip(axes, panels, strict=True):
         grid, extent = spatial_field(samples, radius, bins, min_count)

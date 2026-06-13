@@ -36,10 +36,12 @@ built-in turning bias**. That makes the simulator a clean testbed:
   (clamped to stay inside the disk).
 - **Interactions:** collision avoidance is handled by the **Anticipation Velocity Model (AVM)**,
   JuPedSim's richest lateral-avoidance model — so "no CCW from symmetric avoidance" is a strong result.
-- **Where the bias lives:** the paper proposes the CCW rotation comes from *turning left when facing a
-  wall*. A calibration spike confirmed this: a symmetric wall-turn gives `M̄ ≈ 0`, while a leftward
-  wall-turn gives a strong `M̄ > 0`. So the individual bias is a single knob in the **wall response**,
-  cleanly separated from the collective (AVM) avoidance.
+- **Where the bias lives:** we try the individual bias in two places. (a) **Wall response** — turn left
+  only when facing a wall; a calibration spike confirmed a symmetric wall-turn gives `M̄ ≈ 0` while a
+  leftward one gives a strong `M̄ > 0`, so this is a single knob (`biased_fraction`) cleanly separated
+  from the collective (AVM) avoidance. (b) **Free-space veer** — a constant leftward curvature applied
+  every step (`free_curvature`), the paper's "intrinsic" reading. We compare both against the
+  experiment's spatial field below; they fail in different, informative ways.
 - **Metric:** `M(t)` exactly as in the paper (azimuthal projection of each agent's velocity, averaged),
   with `M̄` the time average after a warm-up.
 - **Conditions:** control (symmetric) vs biased (turn-left-at-wall), at crowd sizes `N ∈ {16, 24, 32}`,
@@ -107,39 +109,63 @@ the full `M` *distribution* — not just the mean — closely coincides with the
 
 Reproduce with `python scripts/validate_against_data.py` (needs `materials/ExperimentalData/` unzipped).
 
-### Where the rotation lives — the limit of our shortcut
+### Where the rotation lives — and two ways a minimal model fails
 
-Matching the mean `M̄` is not the same as matching the mechanism. Their analysis code lets us go
-further and ask *where* in the arena the rotation happens, by mapping the mean local `m` over space
-(the paper's Fig 3 idea). Here the experiment and our model part ways:
+Matching the mean `M̄` is not the same as matching the mechanism. Their analysis code lets us go further
+and ask *where* in the arena the rotation happens, by mapping the mean local `m` over space (the paper's
+Fig 3 idea). We compare the experiment with **two** minimal models:
 
-![spatial polarization field: experiment vs simulation](docs/results/polarization_field.png)
+- **wall-turn** — a share of agents turn left only when facing the wall (the model calibrated above; `M̄`
+  matches the experiment by construction).
+- **intrinsic veer** — every agent has a faithful, constant **left** veer applied at every step (the
+  "individual locomotor bias" the paper proposes; ref. 37, *walking straight into circles*), with a
+  symmetric wall response. We report what this actually does, not a tuned match.
 
-(Both panels share a colour scale clipped at ±0.4 for visibility; the simulation rim actually reaches
-`m ≈ 0.97`, far past the clip, so the two blue rings are not as similar as they look — see the radial
-profile below.)
+![spatial polarization field: experiment vs the two models](docs/results/polarization_field.png)
 
-Both fields are near zero at the very centre. The difference is in *how the rotation is distributed*. In
-the experiment the counterclockwise motion builds up through the **interior**, peaks in the outer-middle
-of the disk, and then **eases off again at the wall**. In our simulation the interior stays near zero
-and the rotation is a thin **spike at the rim**. The radial profile makes this quantitative:
+(The colour scale is clipped at ±0.4 for visibility; the wall-turn rim actually reaches `m ≈ 0.98`, far
+past the clip — see the profile below.)
 
 ![mean local m vs distance from centre](docs/results/radial_profile.png)
 
-| distance from centre | experiment | simulation |
-|---|---|---|
-| centre (r ≈ 0.25 m) | +0.05 | −0.04 |
-| mid (r ≈ 2.25 m)    | +0.11 | +0.06 |
-| outer-middle (r ≈ 3.75 m) | +0.33 | +0.21 |
-| at the wall (r ≈ 4.75 m)  | +0.15 | +0.97 |
+Mean local `m` per ring (distance `r` from the centre, in metres):
 
-The two trends are opposite where it matters: the experiment's `m` is already clearly positive across
-the bulk and then *drops* near the wall, while ours is near zero across the bulk and then *spikes* at
-the wall. This is exactly what our mechanism should produce — the bias only fires when an agent faces
-the wall, so only agents near the wall turn — and it is what the paper argues against: they find the
-bias is **intrinsic to each walker**, present even away from any boundary. So our wall-turn model
-reproduces the *amount* of rotation (`M̄`) but not its *spatial structure*. Matching a single number is
-not the same as matching the mechanism, and the gap points back at the paper's central claim.
+| r (m) | experiment | wall-turn | intrinsic veer |
+|------:|:----------:|:---------:|:--------------:|
+| 0.25  | +0.05 | +0.01 | +0.06 |
+| 0.75  | +0.02 | −0.00 | +0.05 |
+| 1.25  | +0.06 | −0.01 | +0.03 |
+| 1.75  | +0.10 | +0.02 | +0.04 |
+| 2.25  | +0.11 | +0.06 | +0.01 |
+| 2.75  | +0.20 | +0.04 | −0.10 |
+| 3.25  | +0.21 | +0.09 | −0.21 |
+| 3.75  | +0.33 | +0.24 | −0.12 |
+| 4.25  | +0.21 | +0.62 | −0.10 |
+| 4.75  | +0.15 | +0.98 |  n/a  |
+| **M̄** | **+0.185** | **+0.203** | **−0.097** |
+
+(The intrinsic model's outermost ring is empty — the symmetric wall response keeps agents off the very
+rim.)
+
+The experiment shows a **coherent counterclockwise rotation that fills the disk**: positive at every
+radius, building from a faint core to a peak in the outer-middle (`r ≈ 3.75 m`), then easing at the very
+wall. Neither minimal model reproduces this, and they fail in *different* ways:
+
+- **wall-turn** gets the *amount* of rotation right but puts it in the wrong place — a thin **edge spike**
+  at the rim, with a near-still interior. The bias only fires at the wall, so only agents at the wall
+  rotate.
+- **intrinsic veer** concentrates its rotation in the **outer-middle** (around `r ≈ 3.25 m`) rather than
+  a thin rim spike — closer to *where* the experiment peaks — but it comes out **clockwise**, the wrong
+  sign, with `M̄ ≈ −0.10`: a faint counterclockwise core wrapped in a clockwise outer-middle band. In
+  open space a left veer does rotate counterclockwise (we check this directly: a lone walker in a large
+  arena gives `m > 0`). Once confined, our inward wall response flips it — the *net sign is set by how
+  the veer meets the wall*, not by the veer alone — so this minimal intrinsic model is not robust either.
+
+In short: the experiment's coherent, disk-filling counterclockwise rotation does not fall out of either
+shortcut — a wall-only turn, or an independent constant veer under realistic heading noise. That is
+consistent with the paper's claim that the effect rests on a genuine **individual** locomotor bias whose
+collective expression a one-knob model does not casually recover. Reproducing the field, not just the
+mean, would need more than either minimal mechanism offers.
 
 ## Running it
 
