@@ -63,3 +63,49 @@ def trajectory_animation(
     anim.save(out_path, writer=animation.FFMpegWriter(fps=fps, bitrate=2400))
     plt.close(fig)
     return out_path
+
+
+def comparison_animation(
+    cases: list[tuple[str, list[list[tuple[float, float]]]]],
+    radius: float,
+    out_path: Path,
+    fps: int = 20,
+) -> Path:
+    """Animate several labelled cases side by side (one arena panel each) to an mp4.
+
+    cases: list of (label, trajectory). Panels share a clock; shorter trajectories hold
+    their last frame."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib import animation
+    from matplotlib.patches import Circle
+
+    n = len(cases)
+    n_frames = max(len(traj) for _, traj in cases)
+    fig, axes = plt.subplots(1, n, figsize=(4.2 * n, 4.6))
+    if n == 1:
+        axes = [axes]
+    scatters = []
+    for ax, (label, _) in zip(axes, cases, strict=True):
+        ax.add_patch(Circle((0, 0), radius, fill=False, color="#5b6b88"))
+        scatters.append(ax.scatter([], [], s=30, c="#4e79a7"))
+        ax.set_xlim(-radius * 1.05, radius * 1.05)
+        ax.set_ylim(-radius * 1.05, radius * 1.05)
+        ax.set_aspect("equal")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title(label, fontsize=11)
+    fig.tight_layout()
+
+    def frame(i):
+        for scat, (_, traj) in zip(scatters, cases, strict=True):
+            scat.set_offsets(traj[min(i, len(traj) - 1)])
+        return scatters
+
+    anim = animation.FuncAnimation(fig, frame, frames=n_frames, interval=1000 / fps)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    anim.save(out_path, writer=animation.FFMpegWriter(fps=fps, bitrate=2400))
+    plt.close(fig)
+    return out_path

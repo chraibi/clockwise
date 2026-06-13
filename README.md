@@ -78,12 +78,16 @@ on zero; with 45 % left-turners it shifts to `M̄ ≈ +0.23`.
 
 ![M distribution: control vs biased](docs/results/m_pdf.png)
 
-**3. The rotation is visible.** Left: a control crowd (symmetric avoidance) mills without a net sense.
-Right: with the left-turn-at-wall bias the crowd circulates counterclockwise.
+**3. The rotation is visible.** Three crowds side by side as the share of left-turners increases — the
+control mills without a net sense; with more left-turners the crowd circulates counterclockwise:
 
-| control (`M̄ ≈ 0`) | biased (`M̄ ≈ 0.48`) |
-|---|---|
-| ![control](docs/results/rotation_control.gif) | ![biased](docs/results/rotation_biased.gif) |
+![comparison: 0%, 45%, 100% left-turners](docs/results/comparison.gif)
+
+Individual cases (full-quality MP4s in `docs/results/`):
+
+| 0% — control (`M̄ ≈ 0`) | 45% — ≈ paper (`M̄ ≈ 0.28`) | 100% (`M̄ ≈ 0.62`) |
+|---|---|---|
+| ![control](docs/results/rotation_control.gif) | ![45%](docs/results/rotation_f45.gif) | ![100%](docs/results/rotation_f100.gif) |
 
 **What this shows.** JuPedSim's collision avoidance is symmetric and produces no preferred rotation;
 adding the paper's proposed individual bias — turning left when facing a wall — is sufficient to make a

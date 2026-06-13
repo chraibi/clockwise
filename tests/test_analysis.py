@@ -29,3 +29,12 @@ def test_trajectory_animation_writes_mp4(tmp_path):
     frames = [[(0.0, 0.0), (1.0, 0.0)], [(0.1, 0.1), (1.0, 0.1)], [(0.2, 0.0), (0.9, 0.2)]]
     out = trajectory_animation(frames, radius=5.0, out_path=tmp_path / "a.mp4", fps=5)
     assert out.exists()
+
+
+def test_comparison_animation_writes_mp4(tmp_path):
+    from clockwise.analysis import comparison_animation
+    a = [[(0.0, 0.0)], [(0.1, 0.0)], [(0.2, 0.0)]]
+    b = [[(0.0, 1.0)], [(0.0, 1.1)]]  # shorter: holds last frame
+    out = comparison_animation([("control", a), ("biased", b)], radius=5.0,
+                               out_path=tmp_path / "c.mp4", fps=5)
+    assert out.exists()
