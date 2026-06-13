@@ -42,11 +42,11 @@ Neither reproduces the experiment, and they miss in different ways. The **wall-t
 
 We read this as support for the paper's framing rather than against it: matching one number with a one-knob shortcut is easy, but the spatial structure of the real rotation does not casually fall out of either simple mechanism. A faithful reproduction would need more than we put in here.
 
-## What this is, and what it isn't
+## Where this leaves us
 
-This is a reproduction, not new science. The phenomenon, the data, and the explanation are the authors'. What we did is check, in an independent interaction-based simulator, that symmetric avoidance produces no rotation and that the proposed turn-left-at-wall bias produces the counterclockwise motion at about the reported magnitude — even if, as we saw, not its full spatial structure.
+We set out to probe the mechanism behind a real phenomenon, and we learned a few concrete things. Symmetric collision avoidance produces no preferred rotation. A turn-left-at-wall bias recovers the counterclockwise motion at about the reported magnitude. And looking at *where* the rotation lives shows that getting the average right is the easy part — the spatial structure is more demanding, and it is what separates a coincidence from the actual mechanism.
 
-It is also limited in scope, and we want to be clear about it: we reproduce the **confined-arena** result through the wall-turn mechanism. The paper also reports counterclockwise motion **without boundaries** and for people walking **alone** — which a wall-turn model cannot explain. So we are testing the confined/wall part of their work, not the full claim that the bias acts even without walls.
+There is plenty left to do. The experiment also reports counterclockwise motion **without boundaries** and for people walking **alone**, which neither of our minimal models touches yet. Reproducing the full spatial field will need a richer individual model than a single knob. Those are the next steps, and this is a short teaser of an ongoing exploration rather than the final word — what we add is an independent look at the mechanism in a different simulator.
 
 Everything — model, experiments, figures, and videos — is openly available, and the results regenerate with one command:
 
