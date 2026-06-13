@@ -41,10 +41,19 @@ def test_comparison_animation_writes_mp4(tmp_path):
 
 
 def test_comparison_animation_grid_with_surplus_cells(tmp_path):
-    # five panels in a 3-column grid -> 2 rows, one hidden cell; must still render
+    # five panels in a 3-column grid -> 2 rows, partial last row centred; must still render
     from clockwise.analysis import comparison_animation
     cases = [(f"m{i}", [[(0.0, 0.0)], [(0.1, 0.1)]]) for i in range(5)]
     out = comparison_animation(cases, radius=5.0, out_path=tmp_path / "grid.mp4", fps=5, ncols=3)
+    assert out.exists()
+
+
+def test_comparison_animation_colours_by_rotation(tmp_path):
+    # (x, y, m) frames colour agents by rotation and add a colourbar
+    from clockwise.analysis import comparison_animation
+    a = [[(0.0, 0.0, 0.5), (1.0, 0.0, -0.5)], [(0.1, 0.1, 0.9), (1.0, 0.1, -0.2)]]
+    out = comparison_animation([("real", a), ("model", a)], radius=5.0,
+                               out_path=tmp_path / "col.mp4", fps=5)
     assert out.exists()
 
 

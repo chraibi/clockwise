@@ -17,6 +17,7 @@ from clockwise.analysis import comparison_animation
 from clockwise.config import ArenaConfig
 from clockwise.experiment import run_arena
 from clockwise.models import MODELS
+from clockwise.polarization import m_individual
 
 TRIAL = Path("materials/ExperimentalData/Spain/A9/2.csv")  # 32 peds, clear CCW rotation
 OUT = Path("docs/results")
@@ -25,16 +26,31 @@ SAMPLE_DT = 0.2  # s between rendered frames
 FPS = 15
 
 
-def experiment_frames(csv: Path, sample_dt: float) -> tuple[list[list[tuple[float, float]]], int]:
-    """Frames of (x, y) per pedestrian from a trial CSV, sampled every `sample_dt` seconds."""
+def experiment_frames(csv: Path, sample_dt: float):
+    """Frames of (x, y, m) per pedestrian from a trial CSV, sampled every `sample_dt` seconds.
+    `m` is the authors' own per-agent polarization (`Pol`)."""
     df = pd.read_csv(csv)
     times = sorted(df["Time(s)"].unique())
     stride = max(1, round(sample_dt / (times[1] - times[0])))
     frames = []
     for t in times[::stride]:
         rows = df[df["Time(s)"] == t]
-        frames.append(list(zip(rows["X(m)"], rows["Y(m)"], strict=True)))
+        frames.append(list(zip(rows["X(m)"], rows["Y(m)"], rows["Pol"], strict=True)))
     return frames, int(df["Id-Ped"].nunique())
+
+
+def with_rotation(frames, sample_dt):
+    """Turn (x, y) model frames into (x, y, m), m from a finite-difference velocity about the
+    arena centre. Agent order is stable across model frames, so consecutive frames pair up."""
+    out = []
+    for i, fr in enumerate(frames):
+        prev = frames[i - 1] if i > 0 else fr
+        triples = []
+        for (x, y), (px, py) in zip(fr, prev, strict=True):
+            v = ((x - px) / sample_dt, (y - py) / sample_dt)
+            triples.append((x, y, m_individual(v, (x, y), (0.0, 0.0))))
+        out.append(triples)
+    return out
 
 
 _LABELS = {
@@ -57,7 +73,7 @@ def main() -> None:
     cases = [("experiment (real data)", exp)]
     for name in MODELS:
         res = run_arena(seed=0, cfg=replace(base, model=name), record_traj=True)
-        cases.append((_LABELS[name], res.trajectory))
+        cases.append((_LABELS[name], with_rotation(res.trajectory, SAMPLE_DT)))
         print(f"{name:32s} {len(res.trajectory)} frames, M̄={res.m_bar:+.3f}")
 
     n_frames = min(len(traj) for _, traj in cases)  # play in lockstep, no freezing

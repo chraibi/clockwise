@@ -67,7 +67,7 @@ def trajectory_animation(
 
 
 def comparison_animation(
-    cases: list[tuple[str, list[list[tuple[float, float]]]]],
+    cases: list[tuple[str, list[list[tuple[float, ...]]]]],
     radius: float,
     out_path: Path,
     fps: int = 20,
@@ -75,39 +75,60 @@ def comparison_animation(
 ) -> Path:
     """Animate several labelled cases as arena panels to an mp4.
 
-    cases: list of (label, trajectory). Panels share a clock; shorter trajectories hold their
-    last frame. Panels lay out in a grid of `ncols` columns (default: a single row); any
-    surplus cells are hidden."""
+    cases: list of (label, trajectory). Each frame is a list of points: `(x, y)` for a single
+    colour, or `(x, y, m)` to colour each agent by its rotation `m` (blue = CCW, red = CW, with
+    a shared colourbar). Panels share a clock; shorter trajectories hold their last frame.
+    Panels lay out in a grid of `ncols` columns (default: a single row); a partial last row is
+    centred under the rows above it."""
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib import animation
+    from matplotlib import animation, cm
+    from matplotlib.colors import Normalize
     from matplotlib.patches import Circle
 
     n = len(cases)
     n_frames = max(len(traj) for _, traj in cases)
     ncols = ncols or n
     nrows = (n + ncols - 1) // ncols
-    fig, axes = plt.subplots(nrows, ncols, figsize=(4.2 * ncols, 4.6 * nrows))
-    axes = np.atleast_1d(axes).ravel()
-    for ax in axes[n:]:
-        ax.axis("off")
+    colored = len(cases[0][1][0][0]) == 3
+    cmap = "coolwarm_r"
+
+    # Grid is 2 half-columns per panel, so a partial last row can be centred by a 1-column shift.
+    fig = plt.figure(figsize=(4.2 * ncols, 4.6 * nrows), layout="constrained")
+    gs = fig.add_gridspec(nrows, 2 * ncols)
+    axes = []
+    for idx in range(n):
+        row, col = divmod(idx, ncols)
+        row_count = min(ncols, n - row * ncols)
+        c0 = (ncols - row_count) + 2 * col  # centre a short row
+        axes.append(fig.add_subplot(gs[row, c0:c0 + 2]))
+
     scatters = []
-    for ax, (label, _) in zip(axes[:n], cases, strict=True):
+    for ax, (label, _) in zip(axes, cases, strict=True):
         ax.add_patch(Circle((0, 0), radius, fill=False, color="#5b6b88"))
-        scatters.append(ax.scatter([], [], s=30, c="#4e79a7"))
+        if colored:
+            scatters.append(ax.scatter([], [], s=30, c=[], cmap=cmap, vmin=-1, vmax=1))
+        else:
+            scatters.append(ax.scatter([], [], s=30, c="#4e79a7"))
         ax.set_xlim(-radius * 1.05, radius * 1.05)
         ax.set_ylim(-radius * 1.05, radius * 1.05)
         ax.set_aspect("equal")
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_title(label, fontsize=11)
-    fig.tight_layout()
+    if colored:
+        sm = cm.ScalarMappable(cmap=cmap, norm=Normalize(-1, 1))
+        fig.colorbar(sm, ax=axes, fraction=0.02, pad=0.01,
+                     label="agent rotation m  (blue = CCW, red = CW)")
 
     def frame(i):
         for scat, (_, traj) in zip(scatters, cases, strict=True):
-            scat.set_offsets(traj[min(i, len(traj) - 1)])
+            pts = traj[min(i, len(traj) - 1)]
+            scat.set_offsets([(p[0], p[1]) for p in pts])
+            if colored:
+                scat.set_array(np.array([p[2] for p in pts]))
         return scatters
 
     anim = animation.FuncAnimation(fig, frame, frames=n_frames, interval=1000 / fps)
