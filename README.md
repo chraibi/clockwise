@@ -95,6 +95,18 @@ confined crowd rotate counterclockwise, and the magnitude is set by how common t
 population. This matches the paper's confined-arena result. It does **not** address the paper's
 boundary-free and lone-walker findings (see *Scope* above) — a wall-turn mechanism cannot.
 
+## Validation against the experimental data
+
+The authors' trajectory files include a per-agent polarization column (`Pol`). Recomputing it from
+their `(X, Y, VX, VY)` with our metric matches **exactly** (max difference 0.0000, correlation 1.0
+across every Spanish trial), so our `M` is identical to theirs. Pooled over all Spanish trials the
+experimental `M̄ = +0.185`. Choosing the share of left-turners so the simulated `M̄` matches (≈ 30 %),
+the full `M` *distribution* — not just the mean — closely coincides with the experiment:
+
+![experiment vs simulation](docs/results/experiment_vs_sim.png)
+
+Reproduce with `python scripts/validate_against_data.py` (needs `materials/ExperimentalData/` unzipped).
+
 ## Running it
 
 ```bash
