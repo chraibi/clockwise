@@ -21,36 +21,44 @@ people avoiding each other — it persists even for a person walking alone — b
 JuPedSim's operational models are pure *interaction* models: agents avoid collisions but have **no
 built-in turning bias**. That makes the simulator a clean testbed:
 
-- **Control** — plain agents roaming with collision avoidance but no individual bias. If the paper is
-  right, no CCW rotation should appear (`M̄ ≈ 0`).
-- **Biased** — add a small per-agent left-turn bias `β`. If the mechanism is right, a CCW rotation
-  should appear (`M̄ > 0`, near the experimental `≈ 0.2` for a calibrated `β`).
+- **Control** — agents roam with collision avoidance and a **symmetric** wall response (turn toward
+  the centre). If the paper is right, no CCW rotation should appear (`M̄ ≈ 0`).
+- **Biased** — give agents the paper's proposed individual bias: **turn left when facing the wall**. If
+  the mechanism is right, a CCW rotation should appear (`M̄ > 0`, near the experimental `≈ 0.2` for a
+  calibrated turn strength).
 
 ## The model and our decisions
 
 - **Arena:** a walkable disk of radius 5 m (matching the Spanish experiment), no internal obstacles.
-- **Roaming:** each agent follows a heading that random-walks (wander) and, in the biased condition,
-  receives a constant counterclockwise increment `β`; near the rim it steers inward. Agents are moved
-  by JuPedSim **direct steering** toward a point just ahead of them.
+- **Roaming:** each agent follows a heading that random-walks (unbiased wander). Near the rim it turns
+  away from the wall — **symmetrically toward the centre** in the control, or **left (CCW)** in the
+  biased condition. Agents are moved by JuPedSim **direct steering** toward a point just ahead of them
+  (clamped to stay inside the disk).
 - **Interactions:** collision avoidance is handled by the **Anticipation Velocity Model (AVM)**,
-  JuPedSim's richest lateral-avoidance model — so "no CCW without bias" is a strong result.
-- **Separation of cause:** the collective part (avoidance) lives entirely in the JuPedSim model; the
-  individual part (the bias) is a single knob `β`. This mirrors the paper's individual-vs-collective
-  distinction.
+  JuPedSim's richest lateral-avoidance model — so "no CCW from symmetric avoidance" is a strong result.
+- **Where the bias lives:** the paper proposes the CCW rotation comes from *turning left when facing a
+  wall*. A calibration spike confirmed this: a symmetric wall-turn gives `M̄ ≈ 0`, while a leftward
+  wall-turn gives a strong `M̄ > 0`. So the individual bias is a single knob in the **wall response**,
+  cleanly separated from the collective (AVM) avoidance.
 - **Metric:** `M(t)` exactly as in the paper (azimuthal projection of each agent's velocity, averaged),
   with `M̄` the time average after a warm-up.
-- **Conditions:** control vs biased, at crowd sizes `N ∈ {16, 24, 32}`, several seeds each.
-- **One calibrated parameter:** `β` is tuned so the biased case lands near `M̄ ≈ 0.2`; we report its
-  value. The headline result is the *qualitative* contrast, not a fitted number.
+- **Conditions:** control (symmetric) vs biased (turn-left-at-wall), at crowd sizes `N ∈ {16, 24, 32}`,
+  several seeds each.
+- **One calibrated parameter:** the leftward wall-turn strength, tuned so the biased case lands near
+  `M̄ ≈ 0.2`; we report its value. The headline result is the *qualitative* contrast, not a fitted
+  number.
 
-Full rationale, parameters, and risks (wall artefacts, avoidance asymmetry) are in `docs/design.md`.
+**Scope (honest):** this reproduces the **confined-arena** CCW via the wall-turn mechanism. The paper
+also finds CCW *without* boundaries and for lone walkers, which a wall-turn model does not explain — so
+we test the paper's confined/wall hypothesis specifically, not its full claim. Full rationale and risks
+are in `docs/design.md`.
 
 ## Results
 
 *To be added once the study runs:*
 
 - [ ] `M`-distribution plot: control (centred on 0) vs biased (shifted CCW) — the headline figure.
-- [ ] `M̄` table by condition and crowd size, with the calibrated `β`.
+- [ ] `M̄` table by condition and crowd size, with the calibrated wall-turn strength.
 - [ ] Trajectory animation (GIF/MP4): a visibly rotating crowd in the biased condition vs a
       directionless control.
 - [ ] Optional single-agent (`N=1`) check.

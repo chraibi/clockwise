@@ -10,6 +10,18 @@
 
 **Spec:** `docs/design.md`
 
+> **DESIGN REVISION (2026-06-13, as-built):** A calibration spike during Task 8 showed the original
+> mechanism (free-space CCW curvature `β` + symmetric inward wall-turn) does **not** produce CCW
+> (`M̄ ≈ 0`). Per the paper's actual hypothesis, the bias is *"turn left when facing a wall."* The
+> as-built code therefore differs from the task bodies below:
+> - free-space motion is **unbiased wander** (no `β`);
+> - the bias is a **leftward wall-turn**, parameter `left_wall_bias` (replaces `bias_beta`); when 0 the
+>   wall-turn is **symmetric toward the centre** (the control);
+> - the steering carrot is **clamped inside the disk** (fixes an out-of-bounds crash).
+> Spike result: symmetric wall-turn `M̄ ≈ −0.02`, leftward wall-turn (`left_wall_bias = 0.4`) `M̄ ≈ 0.57`.
+> The canonical description is `docs/design.md`. Tasks 1, 4, 5, 6, 7 were revised accordingly; the
+> sweep/CLI/analysis column is `left_wall_bias`.
+
 ## Verified JuPedSim 1.4.2 API
 
 - Disk geometry: `from shapely import Point; disk = Point(0,0).buffer(5.0, quad_segs=64)`.
