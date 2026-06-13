@@ -55,17 +55,54 @@ are in `docs/design.md`.
 
 ## Results
 
-*To be added once the study runs:*
+5 m arena, `N ∈ {16, 24, 32}`, 10 seeds per point. (Reproduce with
+`python -m clockwise --fractions 0.0 0.25 0.45 0.7 1.0 --sizes 16 24 32 --seeds 10 --out docs/results`.)
 
-- [ ] `M`-distribution plot: control (centred on 0) vs biased (shifted CCW) — the headline figure.
-- [ ] `M̄` table by condition and crowd size, with the calibrated wall-turn strength.
-- [ ] Trajectory animation (GIF/MP4): a visibly rotating crowd in the biased condition vs a
-      directionless control.
-- [ ] Optional single-agent (`N=1`) check.
+**1. Symmetric avoidance gives no rotation; a left-turn-at-wall bias does.** With nobody biased the
+crowd does not rotate (`M̄ ≈ 0` at every size); as the share of left-turners grows, `M̄` rises
+monotonically. A share of ~35 % reproduces the experiment's `M̄ ≈ 0.2`; if everyone turns left, the
+rotation is much stronger (`M̄ ≈ 0.57`).
+
+| share of left-turners | mean M̄ (N=16) | (N=24) | (N=32) |
+|-----------------------|---------------|--------|--------|
+| 0 % (control)         | −0.01         | 0.00   | 0.00   |
+| 25 %                  | 0.16          | 0.17   | 0.16   |
+| 45 %                  | 0.28          | 0.27   | 0.26   |
+| 70 %                  | 0.46          | 0.37   | 0.40   |
+| 100 %                 | 0.61          | 0.58   | 0.53   |
+
+![M-bar vs fraction](docs/results/mbar_vs_fraction.png)
+
+**2. The polarization distribution shifts CCW, as in the paper's Fig 2.** The control `M(t)` is centred
+on zero; with 45 % left-turners it shifts to `M̄ ≈ +0.23`.
+
+![M distribution: control vs biased](docs/results/m_pdf.png)
+
+**3. The rotation is visible.** Left: a control crowd (symmetric avoidance) mills without a net sense.
+Right: with the left-turn-at-wall bias the crowd circulates counterclockwise.
+
+| control (`M̄ ≈ 0`) | biased (`M̄ ≈ 0.48`) |
+|---|---|
+| ![control](docs/results/rotation_control.gif) | ![biased](docs/results/rotation_biased.gif) |
+
+**What this shows.** JuPedSim's collision avoidance is symmetric and produces no preferred rotation;
+adding the paper's proposed individual bias — turning left when facing a wall — is sufficient to make a
+confined crowd rotate counterclockwise, and the magnitude is set by how common that bias is in the
+population. This matches the paper's confined-arena result. It does **not** address the paper's
+boundary-free and lone-walker findings (see *Scope* above) — a wall-turn mechanism cannot.
 
 ## Running it
 
-*To be added with the implementation (command-line entry points for a single condition and the sweep).*
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+
+# the full sweep (writes m_bar_sweep.csv, m_bar_table.csv, m_pdf.png):
+python -m clockwise --fractions 0.0 0.25 0.45 0.7 1.0 --sizes 16 24 32 --seeds 10 --out study-output
+
+# tests
+pytest
+```
 
 ## Materials
 
