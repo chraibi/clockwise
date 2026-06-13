@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Large source data from the paper — kept locally in materials/, not committed to git
+materials/ExperimentalData.zip
+materials/SourceData.xlsx
+
+# Re-include result media and the blog dir that the user's global ~/.gitignore blocks
+!*.png
+!*.gif
+!*.mp4
+!blog/
