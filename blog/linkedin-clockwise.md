@@ -44,7 +44,7 @@ We read this as support for the paper's framing rather than against it: matching
 
 ## What this is, and what it isn't
 
-This is a reproduction, not new science. The phenomenon, the data, and the explanation are the authors'. What we did is check, in an independent interaction-based simulator, that symmetric avoidance produces no rotation and that the proposed turn-left-at-wall bias produces the counterclockwise motion at about the reported magnitude.
+This is a reproduction, not new science. The phenomenon, the data, and the explanation are the authors'. What we did is check, in an independent interaction-based simulator, that symmetric avoidance produces no rotation and that the proposed turn-left-at-wall bias produces the counterclockwise motion at about the reported magnitude — even if, as we saw, not its full spatial structure.
 
 It is also limited in scope, and we want to be clear about it: we reproduce the **confined-arena** result through the wall-turn mechanism. The paper also reports counterclockwise motion **without boundaries** and for people walking **alone** — which a wall-turn model cannot explain. So we are testing the confined/wall part of their work, not the full claim that the bias acts even without walls.
 
