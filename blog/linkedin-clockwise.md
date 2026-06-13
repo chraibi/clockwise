@@ -16,7 +16,9 @@ We model a 5 m arena, agents roaming with random headings, collision avoidance f
 
 ## What we found
 
-**With symmetric avoidance, the crowd does not rotate.** Across crowd sizes and seeds, `M̄ ≈ 0`. So the simulator's interaction model alone produces no preferred direction.
+**With symmetric avoidance, the crowd does not rotate.** Across crowd sizes and seeds, `M̄ ≈ 0`. So the simulator's interaction model alone produces no preferred direction. And this is not a quirk of one model: we ran the same control through four of JuPedSim's collision models — Social Force, WarpDriver, Collision-Free Speed, and Anticipation Velocity — and every one stays near zero, far below the experimental value. The rotation has to be put in; it does not fall out of collision avoidance.
+
+**[Insert: `docs/results/model_control.png`]** — the no-bias control for four collision models, against the experimental `M̄`. All four sit near zero.
 
 **Adding the paper's bias — turning left when facing the wall — produces counterclockwise rotation.** We first tried placing the bias in free-space curvature; on its own it did not give the confined rotation (we come back to why below), so we used the mechanism the paper describes directly — turning left *at the wall* — and that reproduces the effect.
 

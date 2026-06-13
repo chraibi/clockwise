@@ -8,6 +8,7 @@ import pandas as pd
 
 from .arena import build_arena
 from .config import ArenaConfig
+from .models import build_agent_params, build_model
 from .polarization import m_individual, polarization
 from .roaming import Roamer, carrot, clamp_inside
 
@@ -61,7 +62,7 @@ def run_arena(
     rng = random.Random(seed)
     disk, centre = build_arena(cfg)
     sim = jps.Simulation(
-        model=jps.AnticipationVelocityModel(rng_seed=seed),
+        model=build_model(cfg.model, seed),
         geometry=disk,
         dt=cfg.dt,
     )
@@ -73,11 +74,7 @@ def run_arena(
     roamers: dict[int, Roamer] = {}
     prev: dict[int, tuple[float, float]] = {}
     for p in starts:
-        params = jps.AnticipationVelocityModelAgentParameters(
-            position=p, desired_speed=cfg.v0, radius=cfg.agent_radius,
-            journey_id=journey, stage_id=direct,
-        )
-        aid = sim.add_agent(params)
+        aid = sim.add_agent(build_agent_params(cfg.model, p, cfg, journey, direct))
         agents.append(aid)
         roamers[aid] = _make_roamer(cfg, rng)
         prev[aid] = p
@@ -137,4 +134,20 @@ def sweep(
                 rows.append(
                     {"biased_fraction": frac, "n_agents": n, "seed": seed, "m_bar": res.m_bar}
                 )
+    return pd.DataFrame(rows)
+
+
+def compare_models_control(
+    models: Sequence[str], seeds: Sequence[int], base: ArenaConfig | None = None
+) -> pd.DataFrame:
+    """Control (no bias) M-bar per operational model. Tests whether symmetric collision
+    avoidance alone creates a preferred rotation — in any JuPedSim model, not just AVM."""
+    from dataclasses import replace
+
+    cfg0 = base or ArenaConfig(n_agents=24)
+    rows = []
+    for name in models:
+        for seed in seeds:
+            res = run_arena(seed, replace(cfg0, model=name, biased_fraction=0.0))
+            rows.append({"model": name, "seed": seed, "m_bar": res.m_bar})
     return pd.DataFrame(rows)

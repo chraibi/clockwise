@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ArenaConfig:
+    # operational model (collision avoidance); see clockwise.models.MODELS
+    model: str = "AnticipationVelocityModel"
     # arena
     radius: float = 5.0           # m
     # crowd

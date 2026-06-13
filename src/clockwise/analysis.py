@@ -149,6 +149,39 @@ def radial_profile(
     return centres, mean, count
 
 
+def model_control_plot(
+    df: pd.DataFrame, out_path: Path, reference: float | None = None
+) -> Path:
+    """Bar chart of mean control M̄ per operational model (error bars = std over seeds).
+
+    `df` has columns model, seed, m_bar (from experiment.compare_models_control). An optional
+    `reference` draws a dashed line (e.g. the experimental M̄) so the flat controls are read
+    against the rotation they fail to produce. Model order follows first appearance in `df`."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    order = list(dict.fromkeys(df["model"]))
+    g = df.groupby("model")["m_bar"].agg(["mean", "std"]).reindex(order).fillna({"std": 0.0})
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.bar(range(len(order)), g["mean"], yerr=g["std"], color="#4e79a7", capsize=5)
+    ax.axhline(0.0, color="k", lw=0.8)
+    if reference is not None:
+        ax.axhline(reference, color="#c0392b", lw=1.2, ls="--",
+                   label=f"experiment M̄ = {reference:+.2f}")
+        ax.legend()
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels([m.replace("Model", "") for m in order], rotation=15, ha="right")
+    ax.set_ylabel("control M̄  (+ = CCW)")
+    ax.set_title("No bias: does collision avoidance alone rotate the crowd?")
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=120)
+    plt.close(fig)
+    return out_path
+
+
 _PROFILE_COLOURS = ["#444", "#c0392b", "#2980b9", "#27ae60", "#8e44ad"]
 
 

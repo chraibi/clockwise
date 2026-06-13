@@ -75,6 +75,16 @@ rotation is much stronger (`M̄ ≈ 0.57`).
 
 ![M-bar vs fraction](docs/results/mbar_vs_fraction.png)
 
+**The flat control is not specific to one model.** The avoidance is symmetric in *every* JuPedSim
+operational model, so the no-bias control should be flat in all of them — not just AVM. Running the
+control through SocialForceModel, WarpDriver, CollisionFreeSpeedModel and AnticipationVelocityModel,
+each lands within `±0.03` of zero, far below the experimental `M̄ = +0.185`. The rotation is not a
+property of any particular collision model; it has to be put in.
+
+![control across models](docs/results/model_control.png)
+
+Reproduce with `python scripts/compare_models.py`.
+
 **2. The polarization distribution shifts CCW, as in the paper's Fig 2.** The control `M(t)` is centred
 on zero; with 45 % left-turners it shifts to `M̄ ≈ +0.23`.
 
