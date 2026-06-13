@@ -21,6 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from clockwise.analysis import field_comparison_plot, radial_profile_plot
 from clockwise.config import ArenaConfig
 from clockwise.experiment import run_arena
 from clockwise.polarization import m_individual
@@ -52,6 +53,29 @@ def simulated_M(biased_fraction: float, seeds: range) -> tuple[list[float], floa
     return m_series, sum(m_series) / len(m_series)
 
 
+def experimental_field(speed_eps: float) -> list[tuple[float, float, float]]:
+    """Per-agent (x, y, m_i) samples pooled over all Spanish trials (m_i = their `Pol`).
+
+    Moving agents only (speed >= speed_eps), to match the simulation field, which records
+    the same way — otherwise near-stationary milling rows (m_i ~ 0) dilute the experiment."""
+    samples: list[tuple[float, float, float]] = []
+    for f in sorted(glob.glob(str(DATA / "*" / "*.csv"))):
+        df = pd.read_csv(f)
+        moving = df[(df["VX(m/s)"] ** 2 + df["VY(m/s)"] ** 2) >= speed_eps**2]
+        samples.extend(zip(moving["X(m)"], moving["Y(m)"], moving["Pol"], strict=True))
+    return samples
+
+
+def simulated_field(biased_fraction: float, seeds: range) -> list[tuple[float, float, float]]:
+    samples: list[tuple[float, float, float]] = []
+    for s in seeds:
+        res = run_arena(
+            s, ArenaConfig(n_agents=24, biased_fraction=biased_fraction), record_field=True
+        )
+        samples.extend(res.field_samples)
+    return samples
+
+
 def main() -> None:
     exp, max_diff, exp_mbar = experimental_M()
     print(f"max|ours - Pol| across all Spanish trials = {max_diff:.4f} (0 = exact match)")
@@ -76,6 +100,14 @@ def main() -> None:
     fig.savefig(OUT / "experiment_vs_sim.png", dpi=120)
     plt.close(fig)
     print(f"wrote {OUT / 'experiment_vs_sim.png'}")
+
+    exp_field = experimental_field(ArenaConfig().speed_eps)
+    sim_field = simulated_field(biased_fraction=frac, seeds=range(10))
+    field_comparison_plot(
+        exp_field, sim_field, radius=5.0, out_path=OUT / "polarization_field.png", min_count=20
+    )
+    radial_profile_plot(exp_field, sim_field, radius=5.0, out_path=OUT / "radial_profile.png")
+    print(f"wrote {OUT / 'polarization_field.png'} and {OUT / 'radial_profile.png'}")
 
 
 if __name__ == "__main__":

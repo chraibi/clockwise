@@ -1,14 +1,14 @@
 import math
 import random
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import jupedsim as jps
 import pandas as pd
 
 from .arena import build_arena
 from .config import ArenaConfig
-from .polarization import polarization
+from .polarization import m_individual, polarization
 from .roaming import Roamer, carrot, clamp_inside
 
 
@@ -20,6 +20,7 @@ class ArenaResult:
     m_bar: float
     m_series: list[float]
     trajectory: list[list[tuple[float, float]]]  # sampled frames of positions (may be empty)
+    field_samples: list[tuple[float, float, float]] = field(default_factory=list)  # (x, y, m_i)
 
 
 def _seed_positions(cfg: ArenaConfig, rng: random.Random) -> list[tuple[float, float]]:
@@ -40,7 +41,12 @@ def _seed_positions(cfg: ArenaConfig, rng: random.Random) -> list[tuple[float, f
     return pts
 
 
-def run_arena(seed: int, cfg: ArenaConfig | None = None, record_traj: bool = False) -> ArenaResult:
+def run_arena(
+    seed: int,
+    cfg: ArenaConfig | None = None,
+    record_traj: bool = False,
+    record_field: bool = False,
+) -> ArenaResult:
     cfg = cfg or ArenaConfig()
     rng = random.Random(seed)
     disk, centre = build_arena(cfg)
@@ -74,6 +80,7 @@ def run_arena(seed: int, cfg: ArenaConfig | None = None, record_traj: bool = Fal
     traj_stride = max(1, round(0.2 / cfg.dt))
     m_series: list[float] = []
     trajectory: list[list[tuple[float, float]]] = []
+    field_samples: list[tuple[float, float, float]] = []
 
     for step in range(n_steps):
         positions, vels = [], []
@@ -93,10 +100,16 @@ def run_arena(seed: int, cfg: ArenaConfig | None = None, record_traj: bool = Fal
             m_series.append(polarization(vels, positions, centre, cfg.speed_eps))
             if record_traj and step % traj_stride == 0:
                 trajectory.append(positions)
+            if record_field:
+                for p, v in zip(positions, vels, strict=True):
+                    if math.hypot(v[0], v[1]) >= cfg.speed_eps:
+                        field_samples.append((p[0], p[1], m_individual(v, p, centre)))
         sim.iterate()
 
     m_bar = sum(m_series) / len(m_series) if m_series else 0.0
-    return ArenaResult(seed, cfg.biased_fraction, cfg.n_agents, m_bar, m_series, trajectory)
+    return ArenaResult(
+        seed, cfg.biased_fraction, cfg.n_agents, m_bar, m_series, trajectory, field_samples
+    )
 
 
 def sweep(

@@ -107,6 +107,40 @@ the full `M` *distribution* — not just the mean — closely coincides with the
 
 Reproduce with `python scripts/validate_against_data.py` (needs `materials/ExperimentalData/` unzipped).
 
+### Where the rotation lives — the limit of our shortcut
+
+Matching the mean `M̄` is not the same as matching the mechanism. Their analysis code lets us go
+further and ask *where* in the arena the rotation happens, by mapping the mean local `m` over space
+(the paper's Fig 3 idea). Here the experiment and our model part ways:
+
+![spatial polarization field: experiment vs simulation](docs/results/polarization_field.png)
+
+(Both panels share a colour scale clipped at ±0.4 for visibility; the simulation rim actually reaches
+`m ≈ 0.97`, far past the clip, so the two blue rings are not as similar as they look — see the radial
+profile below.)
+
+Both fields are near zero at the very centre. The difference is in *how the rotation is distributed*. In
+the experiment the counterclockwise motion builds up through the **interior**, peaks in the outer-middle
+of the disk, and then **eases off again at the wall**. In our simulation the interior stays near zero
+and the rotation is a thin **spike at the rim**. The radial profile makes this quantitative:
+
+![mean local m vs distance from centre](docs/results/radial_profile.png)
+
+| distance from centre | experiment | simulation |
+|---|---|---|
+| centre (r ≈ 0.25 m) | +0.05 | −0.04 |
+| mid (r ≈ 2.25 m)    | +0.11 | +0.06 |
+| outer-middle (r ≈ 3.75 m) | +0.33 | +0.21 |
+| at the wall (r ≈ 4.75 m)  | +0.15 | +0.97 |
+
+The two trends are opposite where it matters: the experiment's `m` is already clearly positive across
+the bulk and then *drops* near the wall, while ours is near zero across the bulk and then *spikes* at
+the wall. This is exactly what our mechanism should produce — the bias only fires when an agent faces
+the wall, so only agents near the wall turn — and it is what the paper argues against: they find the
+bias is **intrinsic to each walker**, present even away from any boundary. So our wall-turn model
+reproduces the *amount* of rotation (`M̄`) but not its *spatial structure*. Matching a single number is
+not the same as matching the mechanism, and the gap points back at the paper's central claim.
+
 ## Running it
 
 ```bash
