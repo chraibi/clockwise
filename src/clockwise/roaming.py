@@ -23,10 +23,12 @@ def clamp_inside(
 
 @dataclass
 class Roamer:
-    """Per-agent heading: unbiased wander, plus a wall response that is either symmetric
-    (control) or a leftward turn (the individual bias)."""
+    """Per-agent heading: unbiased wander, plus a wall response. A `biased` agent turns
+    LEFT when facing the wall (the individual bias); others turn symmetrically toward the
+    centre (the control behaviour)."""
 
     heading: float
+    biased: bool = False
 
     def update(
         self, pos: tuple[float, float], cfg: ArenaConfig, rng: random.Random
@@ -37,11 +39,11 @@ class Roamer:
         if r > cfg.radius - cfg.wall_margin and r > 0.0:
             phi_out = math.atan2(y, x)  # outward radial direction
             facing_out = math.cos(h - phi_out) > 0.0
-            if cfg.left_wall_bias > 0.0:
+            if self.biased:
                 if facing_out:
-                    h += cfg.left_wall_bias  # biased: turn LEFT (CCW) away from the wall
+                    h += cfg.left_wall_bias  # turn LEFT (CCW) away from the wall
             else:
-                inward = math.atan2(-y, -x)  # control: symmetric turn toward the centre
+                inward = math.atan2(-y, -x)  # symmetric turn toward the centre
                 diff = math.atan2(math.sin(inward - h), math.cos(inward - h))
                 h += cfg.wall_turn_gain * diff
         self.heading = h

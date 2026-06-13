@@ -15,8 +15,10 @@ class ArenaConfig:
     warmup_s: float = 20.0        # discarded before computing M-bar
     # roaming controller
     wander_sigma: float = 0.15    # rad, per-step random heading change (std); unbiased
-    left_wall_bias: float = 0.0   # rad, leftward (CCW) turn per step when facing the wall.
-                                  # 0 = symmetric control (turn toward centre); >0 = biased.
+    biased_fraction: float = 0.0  # share of agents that turn left at the wall (0 = control).
+                                  # The rest use the symmetric inward turn.
+    left_wall_bias: float = 0.2   # rad, per-step leftward (CCW) turn a biased agent applies
+                                  # when facing the wall (turn strength; effect saturates).
     carrot_distance: float = 1.0  # m, how far ahead the steering target sits
     carrot_margin: float = 0.3    # m, keep the carrot at least this far inside the rim
     wall_margin: float = 1.0      # m from the rim where the wall response starts

@@ -6,14 +6,14 @@ from clockwise.analysis import mbar_table
 def test_mbar_table_groups_by_condition():
     df = pd.DataFrame(
         [
-            {"left_wall_bias": 0.0, "n_agents": 16, "seed": 0, "m_bar": 0.01},
-            {"left_wall_bias": 0.0, "n_agents": 16, "seed": 1, "m_bar": -0.01},
-            {"left_wall_bias": 0.05, "n_agents": 16, "seed": 0, "m_bar": 0.20},
-            {"left_wall_bias": 0.05, "n_agents": 16, "seed": 1, "m_bar": 0.22},
+            {"biased_fraction": 0.0, "n_agents": 16, "seed": 0, "m_bar": 0.01},
+            {"biased_fraction": 0.0, "n_agents": 16, "seed": 1, "m_bar": -0.01},
+            {"biased_fraction": 0.45, "n_agents": 16, "seed": 0, "m_bar": 0.20},
+            {"biased_fraction": 0.45, "n_agents": 16, "seed": 1, "m_bar": 0.22},
         ]
     )
     table = mbar_table(df)
-    row = table[(table["left_wall_bias"] == 0.05) & (table["n_agents"] == 16)].iloc[0]
+    row = table[(table["biased_fraction"] == 0.45) & (table["n_agents"] == 16)].iloc[0]
     assert abs(row["mean"] - 0.21) < 1e-9
     assert {"mean", "std", "n"} <= set(table.columns)
 

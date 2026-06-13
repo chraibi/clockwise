@@ -15,7 +15,7 @@ from .roaming import Roamer, carrot, clamp_inside
 @dataclass
 class ArenaResult:
     seed: int
-    left_wall_bias: float
+    biased_fraction: float
     n_agents: int
     m_bar: float
     m_series: list[float]
@@ -63,7 +63,10 @@ def run_arena(seed: int, cfg: ArenaConfig | None = None, record_traj: bool = Fal
         )
         aid = sim.add_agent(params)
         agents.append(aid)
-        roamers[aid] = Roamer(heading=rng.uniform(0, 2 * math.pi))
+        roamers[aid] = Roamer(
+            heading=rng.uniform(0, 2 * math.pi),
+            biased=rng.random() < cfg.biased_fraction,
+        )
         prev[aid] = p
 
     n_steps = round(cfg.duration_s / cfg.dt)
@@ -93,25 +96,25 @@ def run_arena(seed: int, cfg: ArenaConfig | None = None, record_traj: bool = Fal
         sim.iterate()
 
     m_bar = sum(m_series) / len(m_series) if m_series else 0.0
-    return ArenaResult(seed, cfg.left_wall_bias, cfg.n_agents, m_bar, m_series, trajectory)
+    return ArenaResult(seed, cfg.biased_fraction, cfg.n_agents, m_bar, m_series, trajectory)
 
 
 def sweep(
-    left_biases: Sequence[float],
+    fractions: Sequence[float],
     sizes: Sequence[int],
     seeds: Sequence[int],
     base: ArenaConfig | None = None,
 ) -> pd.DataFrame:
-    """Run every (left_wall_bias, size, seed); returns long DataFrame of m_bar."""
+    """Run every (biased_fraction, size, seed); returns long DataFrame of m_bar."""
     from dataclasses import replace
 
     cfg0 = base or ArenaConfig()
     rows = []
-    for bias in left_biases:
+    for frac in fractions:
         for n in sizes:
             for seed in seeds:
-                res = run_arena(seed, replace(cfg0, left_wall_bias=bias, n_agents=n))
+                res = run_arena(seed, replace(cfg0, biased_fraction=frac, n_agents=n))
                 rows.append(
-                    {"left_wall_bias": bias, "n_agents": n, "seed": seed, "m_bar": res.m_bar}
+                    {"biased_fraction": frac, "n_agents": n, "seed": seed, "m_bar": res.m_bar}
                 )
     return pd.DataFrame(rows)
