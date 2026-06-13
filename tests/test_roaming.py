@@ -48,3 +48,15 @@ def test_control_agent_turns_toward_centre_at_the_wall():
     r = Roamer(heading=math.pi / 2, biased=False)  # pointing +y at (4.6, 0); inward is pi
     r.update(pos=(4.6, 0.0), cfg=cfg, rng=random.Random(0))
     assert r.heading > math.pi / 2  # moved toward inward (pi)
+
+
+def test_control_wall_turn_is_left_right_symmetric():
+    # the symmetric control must have no left/right preference: an agent and its mirror
+    # image across the x-axis receive equal-and-opposite turns. (Guards the M̄≈0 control.)
+    cfg = ArenaConfig(radius=5.0, wander_sigma=0.0, wall_margin=1.0, wall_turn_gain=0.5)
+    h = 0.2
+    a = Roamer(heading=h, biased=False)
+    a.update(pos=(4.6, 0.5), cfg=cfg, rng=random.Random(0))
+    b = Roamer(heading=-h, biased=False)
+    b.update(pos=(4.6, -0.5), cfg=cfg, rng=random.Random(0))
+    assert math.isclose(a.heading - h, -(b.heading + h), abs_tol=1e-9)
