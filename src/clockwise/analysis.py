@@ -111,8 +111,9 @@ def comparison_animation(
         ax.add_patch(Circle((0, 0), radius, fill=False, color="#5b6b88"))
         if colored:
             scatters.append(ax.scatter([], [], s=30, c=[], cmap=cmap, vmin=-1, vmax=1))
-            labels.append(ax.text(0.5, -0.04, "", transform=ax.transAxes, ha="center",
-                                  va="top", fontsize=10))
+            # top-left corner: inside the box, outside the disk
+            labels.append(ax.text(0.04, 0.96, "", transform=ax.transAxes, ha="left",
+                                  va="top", fontsize=11))
         else:
             scatters.append(ax.scatter([], [], s=30, c="#4e79a7"))
         ax.set_xlim(-radius * 1.05, radius * 1.05)
@@ -134,7 +135,7 @@ def comparison_animation(
                 ms = np.array([p[2] for p in pts])
                 scat.set_array(ms)
                 m_bar = float(ms.mean()) if len(ms) else 0.0
-                labels[k].set_text(f"collective polarization  M = {m_bar:+.2f}")
+                labels[k].set_text(f"M = {m_bar:+.2f}")
         return scatters
 
     anim = animation.FuncAnimation(fig, frame, frames=n_frames, interval=1000 / fps)
