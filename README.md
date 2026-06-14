@@ -96,11 +96,14 @@ on zero; with 45 % left-turners it shifts to `M̄ ≈ +0.23`.
 ![M distribution: control vs biased](docs/results/m_pdf.png)
 
 **3. The rotation is visible.** Three crowds side by side as the share of left-turners increases — the
-control mills without a net sense; with more left-turners the crowd circulates counterclockwise:
+control mills without a net sense; with more left-turners the crowd circulates counterclockwise. Each
+agent is coloured by its own rotation (blue = CCW, red = CW) and the collective polarization `M` ticks
+in the corner:
 
 ![comparison: 0%, 45%, 100% left-turners](docs/results/comparison.gif)
 
-Individual cases (full-quality MP4s in `docs/results/`):
+Regenerate with `python scripts/make_rotation_media.py`. Individual cases (full-quality MP4s in
+`docs/results/`):
 
 | 0% — control (`M̄ ≈ 0`) | 45% — ≈ paper (`M̄ ≈ 0.28`) | 100% (`M̄ ≈ 0.62`) |
 |---|---|---|

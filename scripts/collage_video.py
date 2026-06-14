@@ -14,11 +14,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from clockwise.analysis import comparison_animation
+from clockwise.analysis import comparison_animation, rotation_frames
 from clockwise.config import ArenaConfig
 from clockwise.experiment import run_arena
 from clockwise.models import MODELS
-from clockwise.polarization import m_individual
 
 TRIAL = Path("materials/ExperimentalData/Spain/A9/2.csv")  # 32 peds, clear CCW rotation
 OUT = Path("docs/results")
@@ -46,29 +45,6 @@ def experiment_frames(csv: Path, sample_dt: float, smooth_s: float):
     return frames, int(df["Id-Ped"].nunique())
 
 
-def with_rotation(frames, sample_dt, smooth_s):
-    """Turn (x, y) model frames into (x, y, m): m from a finite-difference velocity about the
-    arena centre, trailing-averaged over `smooth_s`. Agent order is stable across model frames,
-    so consecutive frames pair up by index."""
-    window = max(1, round(smooth_s / sample_dt))
-    raw = []
-    for i, fr in enumerate(frames):
-        prev = frames[i - 1] if i > 0 else fr
-        raw.append([
-            m_individual(((x - px) / sample_dt, (y - py) / sample_dt), (x, y), (0.0, 0.0))
-            for (x, y), (px, py) in zip(fr, prev, strict=True)
-        ])
-    out = []
-    for i, fr in enumerate(frames):
-        lo = max(0, i - window + 1)
-        triples = [
-            (x, y, sum(raw[k][j] for k in range(lo, i + 1)) / (i - lo + 1))
-            for j, (x, y) in enumerate(fr)
-        ]
-        out.append(triples)
-    return out
-
-
 _LABELS = {
     "SocialForceModel": "Social Force",
     "WarpDriverModel": "WarpDriver",
@@ -94,7 +70,7 @@ def main() -> None:
     cases = [("experiment", exp)]
     for name in MODELS:
         res = run_arena(seed=0, cfg=replace(base, model=name), record_traj=True, starts=starts)
-        cases.append((_LABELS[name], with_rotation(res.trajectory, SAMPLE_DT, SMOOTH_S)))
+        cases.append((_LABELS[name], rotation_frames(res.trajectory, SAMPLE_DT, SMOOTH_S)))
         print(f"{name:32s} {len(res.trajectory)} frames, M̄={res.m_bar:+.3f}")
 
     n_frames = min(len(traj) for _, traj in cases)  # play in lockstep, no freezing

@@ -66,6 +66,35 @@ def trajectory_animation(
     return out_path
 
 
+def rotation_frames(
+    frames: list[list[tuple[float, float]]], sample_dt: float, smooth_s: float = 0.0
+) -> list[list[tuple[float, float, float]]]:
+    """Annotate `(x, y)` frames with each agent's rotation -> `(x, y, m)`.
+
+    `m` is the unit-velocity projection on the CCW tangent about the arena centre, from a
+    finite-difference velocity (so agent order must be stable across frames). With `smooth_s`
+    > 0 the `m` channel is trailing-averaged over that window, since rotation is noisy frame to
+    frame."""
+    from .polarization import m_individual
+
+    raw = []
+    for i, fr in enumerate(frames):
+        prev = frames[i - 1] if i > 0 else fr
+        raw.append([
+            m_individual(((x - px) / sample_dt, (y - py) / sample_dt), (x, y), (0.0, 0.0))
+            for (x, y), (px, py) in zip(fr, prev, strict=True)
+        ])
+    window = max(1, round(smooth_s / sample_dt)) if smooth_s > 0 else 1
+    out = []
+    for i, fr in enumerate(frames):
+        lo = max(0, i - window + 1)
+        out.append([
+            (x, y, sum(raw[k][j] for k in range(lo, i + 1)) / (i - lo + 1))
+            for j, (x, y) in enumerate(fr)
+        ])
+    return out
+
+
 def comparison_animation(
     cases: list[tuple[str, list[list[tuple[float, ...]]]]],
     radius: float,
