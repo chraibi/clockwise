@@ -101,7 +101,7 @@ def to_gif(mp4: Path, gif: Path) -> None:
 
 def main() -> None:
     cfg = ArenaConfig()
-    rec = run(cfg, seed=3, duration_s=40.0)
+    rec = run(cfg, seed=3, duration_s=60.0)
     stride = max(1, round(0.2 / cfg.dt))  # display a frame every 0.2 s
     sample_dt = stride * cfg.dt
     sampled = rec[::stride]
