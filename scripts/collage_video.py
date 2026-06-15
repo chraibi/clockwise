@@ -65,11 +65,15 @@ def to_gif(mp4: Path, gif: Path) -> None:
     palette.unlink(missing_ok=True)
 
 
-def render(exp, starts, base, biased_fraction: float, stem: str) -> None:
-    """One collage: experiment beside every model at the given bias share."""
+def render(exp, starts, base, rec_duration, biased_fraction, stem, warmup_s=0.0) -> None:
+    """One collage: experiment beside every model at the given bias share.
+
+    `warmup_s` lets the models settle before recording (the rotation needs time to build); with
+    warmup_s = 0 the recording starts at the shared experiment positions."""
     cases = [("experiment", exp)]
     for name in MODELS:
-        cfg = replace(base, model=name, biased_fraction=biased_fraction)
+        cfg = replace(base, model=name, biased_fraction=biased_fraction,
+                      warmup_s=warmup_s, duration_s=warmup_s + rec_duration)
         res = run_arena(seed=0, cfg=cfg, record_traj=True, starts=starts)
         cases.append((_LABELS[name], rotation_frames(res.trajectory, SAMPLE_DT, SMOOTH_S)))
         print(f"  {name:32s} M̄={res.m_bar:+.3f}")
@@ -86,19 +90,18 @@ def main() -> None:
     duration = len(exp) * SAMPLE_DT
     print(f"experiment: {n_ped} peds, {len(exp)} frames (~{duration:.0f}s)")
 
-    # Models start from the experiment's first-frame positions, no warm-up, so frame 0 is the
-    # shared start.
     starts = [(x, y) for x, y, _ in exp[0]]
     gap = min(math.dist(a, b) for i, a in enumerate(starts) for b in starts[i + 1 :])
     radius = min(0.2, gap / 2 - 0.02)  # shrink the body to fit the real crowd spacing
-    base = ArenaConfig(
-        n_agents=len(starts), warmup_s=0.0, duration_s=duration, agent_radius=radius
-    )
+    base = ArenaConfig(n_agents=len(starts), agent_radius=radius)
 
+    # Control: no warm-up, so frame 0 is the shared experiment start.
     print("control (no bias):")
-    render(exp, starts, base, biased_fraction=0.0, stem="collage_models")
+    render(exp, starts, base, duration, biased_fraction=0.0, stem="collage_models")
+    # Biased: warm up first so the counterclockwise drift is established before recording.
     print("biased (30% left-turners):")
-    render(exp, starts, base, biased_fraction=0.30, stem="collage_models_biased")
+    render(exp, starts, base, duration, biased_fraction=0.30,
+           stem="collage_models_biased", warmup_s=30.0)
 
 
 if __name__ == "__main__":
