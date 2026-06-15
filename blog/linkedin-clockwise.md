@@ -10,9 +10,30 @@ We tried to reproduce this in [@JuPedSim](https://www.jupedsim.org/), to see whe
 
 ## Why a simulator helps here
 
-JuPedSim's models handle collision avoidance, but they have no built-in left/right turning preference — the avoidance is symmetric. That makes the simulator a clean test: if a crowd roaming a circular arena with symmetric avoidance does **not** rotate, that supports the paper's point that the bias is individual, not a by-product of interaction. And if adding the individual bias reproduces the rotation, that supports the proposed mechanism.
+JuPedSim cleanly separates two jobs: how people avoid bumping into each other — its part, a validated collision model — and where each person wants to go next, which is ours. You give it a desired direction per agent; it returns collision-free motion. That seam is what makes a study like this easy to build: our "model" is just a rule for where each agent aims next, sitting on top of JuPedSim's locomotion.
 
-We model a 5 m arena, agents roaming with random headings, collision avoidance from the Anticipation Velocity Model, and we measure the same polarization quantity as the paper (`M`: each person's velocity projected onto the counterclockwise direction, averaged over the crowd; `M̄ > 0` means counterclockwise).
+We use *direct steering* — driving each agent ourselves instead of routing it to an exit — and every step we set its target to a point just ahead of a heading we control:
+
+```python
+sim = jps.Simulation(model=jps.AnticipationVelocityModel(), geometry=disk, dt=0.05)
+steering = sim.add_direct_steering_stage()        # we drive the agents ourselves
+journey  = sim.add_journey(jps.JourneyDescription([steering]))
+# ... add agents on this journey ...
+
+while sim.agent_count() > 0:
+    for agent in sim.agents():
+        heading      = roam(agent, cfg)           # our rules: wander + wall + a turning bias
+        agent.target = ahead(agent.position, heading)   # aim a step ahead
+    sim.iterate()                                 # JuPedSim resolves the collisions
+```
+
+The `for` loop is our model; `sim.iterate()` is JuPedSim. Here is a single agent following the target we set for it each step:
+
+**[Insert: `docs/results/steering_demo.gif`]** — one roaming agent (blue) and the target we hand JuPedSim each step (red ring, dashed line). With one agent there is nothing to avoid, so this is just the steering loop.
+
+Swapping the collision model is the one-line change on the first line — which is exactly what lets us later run the same behaviour through several of JuPedSim's models. It also makes the simulator a clean test of the paper's claim: the avoidance has no built-in left/right preference, so if a roaming crowd with symmetric rules does **not** rotate, that supports the paper's point that the bias is individual; and if adding the bias reproduces the rotation, that supports the mechanism.
+
+We model a 5 m arena, agents roaming with random headings, and we measure the same polarization quantity as the paper (`M`: each person's velocity projected onto the counterclockwise direction, averaged over the crowd; `M̄ > 0` means counterclockwise).
 
 ## What we found
 

@@ -33,7 +33,11 @@ built-in turning bias**. That makes the simulator a clean testbed:
 - **Roaming:** each agent follows a heading that random-walks (unbiased wander). Near the rim it turns
   away from the wall — **symmetrically toward the centre** in the control, or **left (CCW)** in the
   biased condition. Agents are moved by JuPedSim **direct steering** toward a point just ahead of them
-  (clamped to stay inside the disk).
+  (clamped to stay inside the disk). The behaviour layer is ours; JuPedSim handles only collisions —
+  so the model is "a model on top of a model". One agent, with the target we feed it each step
+  (`python scripts/steering_demo.py`):
+
+  ![one agent following its steering target](docs/results/steering_demo.gif)
 - **Interactions:** collision avoidance is handled by the **Anticipation Velocity Model (AVM)**,
   JuPedSim's richest lateral-avoidance model — so "no CCW from symmetric avoidance" is a strong result.
 - **Where the bias lives:** we try the individual bias in two places. (a) **Wall response** — turn left
