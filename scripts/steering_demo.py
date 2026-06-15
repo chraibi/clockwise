@@ -62,10 +62,11 @@ def animate(rec, radius: float, out_path: Path, stride: int) -> None:
     ax.set_yticks([])
 
     (trail,) = ax.plot([], [], color="#9fb0c8", lw=1.2, alpha=0.7, zorder=1)
-    (link,) = ax.plot([], [], color="#888", lw=1.2, ls="--", zorder=2, label="target we set")
-    agent = ax.scatter([], [], s=90, c="#4e79a7", zorder=3, label="agent (JuPedSim moves it)")
-    target = ax.scatter([], [], s=90, facecolors="none", edgecolors="#c0392b", zorder=3)
-    ax.legend(loc="upper right", fontsize=9, framealpha=0.9)
+    agent = ax.scatter([], [], s=90, c="#4e79a7", zorder=3, label="Agent")
+    target = ax.scatter([], [], s=90, facecolors="none", edgecolors="#c0392b", zorder=3,
+                        label="Target")
+    ax.legend([target, agent], ["Target", "Agent"], loc="upper right", fontsize=9,
+              framealpha=0.9)
 
     xs, ys = [], []
 
@@ -74,10 +75,9 @@ def animate(rec, radius: float, out_path: Path, stride: int) -> None:
         xs.append(px)
         ys.append(py)
         trail.set_data(xs, ys)
-        link.set_data([px, tx], [py, ty])
         agent.set_offsets([(px, py)])
         target.set_offsets([(tx, ty)])
-        return trail, link, agent, target
+        return trail, agent, target
 
     anim = animation.FuncAnimation(fig, frame, frames=len(frames), interval=1000 / FPS)
     out_path.parent.mkdir(parents=True, exist_ok=True)
