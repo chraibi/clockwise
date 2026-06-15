@@ -72,13 +72,13 @@ def animate(frames, radius: float, out_path: Path) -> None:
     xs, ys = [], []
 
     def frame(i):
-        (px, py), (tx, ty), m = frames[i]
+        (px, py), (tx, ty), m, t = frames[i]
         xs.append(px)
         ys.append(py)
         trail.set_data(xs, ys)
         agent.set_offsets([(px, py)])
         target.set_offsets([(tx, ty)])
-        ax.set_title(f"M = {m:+.2f}", fontsize=12)
+        ax.set_title(f"t = {t:4.1f} s     M = {m:+.2f}", fontsize=12)
         return trail, agent, target
 
     anim = animation.FuncAnimation(fig, frame, frames=len(frames), interval=1000 / FPS)
@@ -100,13 +100,17 @@ def to_gif(mp4: Path, gif: Path) -> None:
 
 
 def main() -> None:
-    cfg = ArenaConfig(dt=0.01)
+    cfg = ArenaConfig()
     rec = run(cfg, seed=3, duration_s=40.0)
     stride = max(1, round(0.2 / cfg.dt))  # display a frame every 0.2 s
+    sample_dt = stride * cfg.dt
     sampled = rec[::stride]
     positions = [[pos] for pos, _ in sampled]
-    m_series = [pts[0][2] for pts in rotation_frames(positions, 0.2, smooth_s=1.0)]
-    frames = [(pos, tgt, m) for (pos, tgt), m in zip(sampled, m_series, strict=True)]
+    m_series = [pts[0][2] for pts in rotation_frames(positions, sample_dt, smooth_s=1.0)]
+    frames = [
+        (pos, tgt, m, i * sample_dt)
+        for i, ((pos, tgt), m) in enumerate(zip(sampled, m_series, strict=True))
+    ]
     mp4 = OUT / "steering_demo.mp4"
     animate(frames, cfg.radius, mp4)
     to_gif(mp4, OUT / "steering_demo.gif")
