@@ -53,34 +53,7 @@ _LABELS = {
 }
 
 
-def main() -> None:
-    exp, n_ped = experiment_frames(TRIAL, SAMPLE_DT, SMOOTH_S)
-    duration = len(exp) * SAMPLE_DT
-    print(f"experiment: {n_ped} peds, {len(exp)} frames (~{duration:.0f}s)")
-
-    # Models start from the experiment's first-frame positions, no warm-up, so frame 0 is the
-    # shared start; control (no bias) for every model.
-    starts = [(x, y) for x, y, _ in exp[0]]
-    gap = min(math.dist(a, b) for i, a in enumerate(starts) for b in starts[i + 1 :])
-    radius = min(0.2, gap / 2 - 0.02)  # shrink the body to fit the real crowd spacing
-    base = ArenaConfig(
-        n_agents=len(starts), biased_fraction=0.0, warmup_s=0.0, duration_s=duration,
-        agent_radius=radius,
-    )
-    cases = [("experiment", exp)]
-    for name in MODELS:
-        res = run_arena(seed=0, cfg=replace(base, model=name), record_traj=True, starts=starts)
-        cases.append((_LABELS[name], rotation_frames(res.trajectory, SAMPLE_DT, SMOOTH_S)))
-        print(f"{name:32s} {len(res.trajectory)} frames, M̄={res.m_bar:+.3f}")
-
-    n_frames = min(len(traj) for _, traj in cases)  # play in lockstep, no freezing
-    cases = [(label, traj[:n_frames]) for label, traj in cases]
-
-    mp4 = OUT / "collage_models.mp4"
-    comparison_animation(cases, radius=RADIUS, out_path=mp4, fps=FPS, ncols=3)
-    print(f"wrote {mp4}")
-
-    gif = OUT / "collage_models.gif"
+def to_gif(mp4: Path, gif: Path) -> None:
     palette = OUT / "_palette.png"
     subprocess.run(
         ["ffmpeg", "-y", "-i", str(mp4), "-vf", "fps=12,scale=900:-1:flags=lanczos,palettegen",
@@ -90,7 +63,42 @@ def main() -> None:
          "fps=12,scale=900:-1:flags=lanczos[x];[x][1:v]paletteuse", str(gif)],
         check=True, capture_output=True)
     palette.unlink(missing_ok=True)
-    print(f"wrote {gif}")
+
+
+def render(exp, starts, base, biased_fraction: float, stem: str) -> None:
+    """One collage: experiment beside every model at the given bias share."""
+    cases = [("experiment", exp)]
+    for name in MODELS:
+        cfg = replace(base, model=name, biased_fraction=biased_fraction)
+        res = run_arena(seed=0, cfg=cfg, record_traj=True, starts=starts)
+        cases.append((_LABELS[name], rotation_frames(res.trajectory, SAMPLE_DT, SMOOTH_S)))
+        print(f"  {name:32s} M̄={res.m_bar:+.3f}")
+    n_frames = min(len(traj) for _, traj in cases)  # play in lockstep, no freezing
+    cases = [(label, traj[:n_frames]) for label, traj in cases]
+    mp4 = OUT / f"{stem}.mp4"
+    comparison_animation(cases, radius=RADIUS, out_path=mp4, fps=FPS, ncols=3)
+    to_gif(mp4, OUT / f"{stem}.gif")
+    print(f"  wrote {stem}.{{mp4,gif}}")
+
+
+def main() -> None:
+    exp, n_ped = experiment_frames(TRIAL, SAMPLE_DT, SMOOTH_S)
+    duration = len(exp) * SAMPLE_DT
+    print(f"experiment: {n_ped} peds, {len(exp)} frames (~{duration:.0f}s)")
+
+    # Models start from the experiment's first-frame positions, no warm-up, so frame 0 is the
+    # shared start.
+    starts = [(x, y) for x, y, _ in exp[0]]
+    gap = min(math.dist(a, b) for i, a in enumerate(starts) for b in starts[i + 1 :])
+    radius = min(0.2, gap / 2 - 0.02)  # shrink the body to fit the real crowd spacing
+    base = ArenaConfig(
+        n_agents=len(starts), warmup_s=0.0, duration_s=duration, agent_radius=radius
+    )
+
+    print("control (no bias):")
+    render(exp, starts, base, biased_fraction=0.0, stem="collage_models")
+    print("biased (30% left-turners):")
+    render(exp, starts, base, biased_fraction=0.30, stem="collage_models_biased")
 
 
 if __name__ == "__main__":

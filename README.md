@@ -88,6 +88,11 @@ circulates counterclockwise; the bare models just mill:
 
 ![collage: experiment vs the four model controls](docs/results/collage_models.gif)
 
+And the converse: give every model the same bias (30 % left-turners) and all four pick up a
+counterclockwise drift — the rotation is put in the same way regardless of the collision model:
+
+![collage: experiment vs the four models with 30% left-turners](docs/results/collage_models_biased.gif)
+
 Reproduce with `python scripts/compare_models.py` and `python scripts/collage_video.py`.
 
 **2. The polarization distribution shifts CCW, as in the paper's Fig 2.** The control `M(t)` is centred
