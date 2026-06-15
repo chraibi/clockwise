@@ -73,7 +73,9 @@ We read this as support for the paper's framing rather than against it: matching
 
 We set out to probe the mechanism behind a real phenomenon, and we learned a few concrete things. Symmetric collision avoidance produces no preferred rotation. A turn-left-at-wall bias recovers the counterclockwise motion at about the reported magnitude. And looking at *where* the rotation lives shows that getting the average right is the easy part — the spatial structure is more demanding, and it is what separates a coincidence from the actual mechanism.
 
-There is plenty left to do. The experiment also reports counterclockwise motion **without boundaries** and for people walking **alone**, which neither of our minimal models touches yet. Reproducing the full spatial field will need a richer individual model than a single knob. So here is the question we keep coming back to: with no wall to turn at and no crowd to follow, what makes a single person drift counterclockwise? We don't have the answer yet — and that is exactly the part we find most interesting. This is a short teaser of an ongoing exploration; more to come.
+There is plenty left to do. The experiment also reports counterclockwise motion **without boundaries** and for people walking **alone**, which neither of our minimal models touches yet. Reproducing the full spatial field will need a richer individual model than a single knob. So here is the question we keep coming back to: with no wall to turn at and no crowd to follow, what makes a single person drift counterclockwise? We don't have the answer yet — and that is exactly the part we find most interesting.
+
+Whatever that next model turns out to be, it goes in the same place: the `roam()` rule above, swapped in over JuPedSim's collision handling, with everything else untouched. That is the part we like most — the simulator stays out of the way, so the science is the only thing we change. This is a short teaser of an ongoing exploration; more to come.
 
 Everything — model, experiments, figures, and videos — is openly available, and the results regenerate with one command:
 
