@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from matplotlib.patches import Circle
 
+from clockwise.analysis import rotation_frames
 from clockwise.arena import build_arena
 from clockwise.config import ArenaConfig
 from clockwise.models import build_agent_params, build_model
@@ -51,8 +52,8 @@ def run(cfg: ArenaConfig, seed: int, duration_s: float):
     return rec
 
 
-def animate(rec, radius: float, out_path: Path, stride: int) -> None:
-    frames = rec[::stride]
+def animate(frames, radius: float, out_path: Path) -> None:
+    """frames: list of (position, target, m) per displayed step."""
     fig, ax = plt.subplots(figsize=(5.2, 5.2))
     ax.add_patch(Circle((0, 0), radius, fill=False, color="#5b6b88"))
     ax.set_xlim(-radius * 1.05, radius * 1.05)
@@ -71,12 +72,13 @@ def animate(rec, radius: float, out_path: Path, stride: int) -> None:
     xs, ys = [], []
 
     def frame(i):
-        (px, py), (tx, ty) = frames[i]
+        (px, py), (tx, ty), m = frames[i]
         xs.append(px)
         ys.append(py)
         trail.set_data(xs, ys)
         agent.set_offsets([(px, py)])
         target.set_offsets([(tx, ty)])
+        ax.set_title(f"M = {m:+.2f}", fontsize=12)
         return trail, agent, target
 
     anim = animation.FuncAnimation(fig, frame, frames=len(frames), interval=1000 / FPS)
@@ -98,10 +100,15 @@ def to_gif(mp4: Path, gif: Path) -> None:
 
 
 def main() -> None:
-    rec = run(ArenaConfig(), seed=3, duration_s=40.0)
-    stride = max(1, round(0.2 / ArenaConfig().dt))
+    cfg = ArenaConfig(dt=0.01)
+    rec = run(cfg, seed=3, duration_s=40.0)
+    stride = max(1, round(0.2 / cfg.dt))  # display a frame every 0.2 s
+    sampled = rec[::stride]
+    positions = [[pos] for pos, _ in sampled]
+    m_series = [pts[0][2] for pts in rotation_frames(positions, 0.2, smooth_s=1.0)]
+    frames = [(pos, tgt, m) for (pos, tgt), m in zip(sampled, m_series, strict=True)]
     mp4 = OUT / "steering_demo.mp4"
-    animate(rec, ArenaConfig().radius, mp4, stride)
+    animate(frames, cfg.radius, mp4)
     to_gif(mp4, OUT / "steering_demo.gif")
     print(f"wrote {mp4} and steering_demo.gif")
 
